@@ -736,16 +736,36 @@ def landing_logo_png():
 
 @app.get("/dashboard")
 def dashboard():
-    # Login-gated dashboard: do not preload sensitive rows into HTML source.
-    events = []
-    alerts = []
-    env_rows = []
+    conn = get_db()
+    events = conn.execute("SELECT * FROM events ORDER BY created_at DESC LIMIT 40").fetchall()
+    alerts = conn.execute("SELECT * FROM alerts ORDER BY created_at DESC LIMIT 40").fetchall()
+    env_rows = conn.execute(
+        "SELECT * FROM environmental_observations ORDER BY observed_at DESC LIMIT 40"
+    ).fetchall()
+    stats = conn.execute(
+        """
+        SELECT
+          COUNT(*) AS total_events,
+          SUM(CASE WHEN high_risk = 1 THEN 1 ELSE 0 END) AS high_risk_events,
+          SUM(CASE WHEN validation_status = 'flagged' THEN 1 ELSE 0 END) AS flagged_events
+        FROM events
+        """
+    ).fetchone()
+    alert_stats = conn.execute(
+        """
+        SELECT
+          COUNT(*) AS total_alerts
+        FROM alerts
+        """
+    ).fetchone()
+    env_stats = conn.execute("SELECT COUNT(*) AS total_env_points FROM environmental_observations").fetchone()
+    conn.close()
     stats_row = {
-        "total_events": 0,
-        "total_alerts": 0,
-        "high_risk_events": 0,
-        "flagged_events": 0,
-        "total_env_points": 0,
+        "total_events": int(stats["total_events"] or 0),
+        "total_alerts": int(alert_stats["total_alerts"] or 0),
+        "high_risk_events": int(stats["high_risk_events"] or 0),
+        "flagged_events": int(stats["flagged_events"] or 0),
+        "total_env_points": int(env_stats["total_env_points"] or 0),
     }
     return render_template(
         "dashboard.html",

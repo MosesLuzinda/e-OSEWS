@@ -79,6 +79,30 @@
       font-size: 13px;
       display: none;
     }
+    .admin-switch {
+      display:flex;
+      gap:8px;
+      margin: 8px 0 12px;
+      flex-wrap: wrap;
+    }
+    .admin-tab {
+      background:#162d64;
+      border:1px solid #365faa;
+      color:#cfe0ff;
+      border-radius:999px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+    }
+    .admin-tab.active {
+      background:#2563eb;
+      border-color:#5ca0ff;
+      color:#fff;
+    }
+    .admin-section.hidden {
+      display:none;
+    }
     @keyframes floatY {
       0% { transform: translateY(0px); }
       50% { transform: translateY(-18px); }
@@ -182,34 +206,42 @@
     <div class="card hidden" id="adminCard">
       <h1>Admin User Management</h1>
       <p class="muted">Admin privileges: create users, edit role/district, activate/deactivate, and reset API token.</p>
-      <div class="grid">
-        <div>
-          <label>New Username</label>
-          <input id="newUsername" placeholder="e.g. district_new" />
-        </div>
-        <div>
-          <label>New Password</label>
-          <input id="newPassword" type="password" placeholder="Set password" />
-        </div>
+      <div class="admin-switch">
+        <button type="button" class="admin-tab active" data-admin-view="createForm">Create User</button>
+        <button type="button" class="admin-tab" data-admin-view="manageForm">Manage Existing Users</button>
       </div>
-      <div class="grid">
-        <div>
-          <label>New Role</label>
-          <select id="newRole">
-            <option>vht</option><option>vet</option><option>clinician</option><option>midwife</option><option>district</option><option>admin</option>
-          </select>
+      <div id="createForm" class="admin-section">
+        <div class="grid">
+          <div>
+            <label>New Username</label>
+            <input id="newUsername" placeholder="e.g. district_new" />
+          </div>
+          <div>
+            <label>New Password</label>
+            <input id="newPassword" type="password" placeholder="Set password" />
+          </div>
         </div>
-        <div>
-          <label>New District</label>
-          <select id="newDistrict">
-            <option value="">None</option><option>Kabale</option><option>Rubanda</option><option>Isingiro</option>
-          </select>
+        <div class="grid">
+          <div>
+            <label>New Role</label>
+            <select id="newRole">
+              <option>vht</option><option>vet</option><option>clinician</option><option>midwife</option><option>district</option><option>admin</option>
+            </select>
+          </div>
+          <div>
+            <label>New District</label>
+            <select id="newDistrict">
+              <option value="">None</option><option>Kabale</option><option>Rubanda</option><option>Isingiro</option>
+            </select>
+          </div>
         </div>
+        <button class="btn" id="createUserBtn" type="button">Create User</button>
       </div>
-      <button class="btn" id="createUserBtn" type="button">Create User</button>
-      <button class="btn" id="refreshUsersBtn" type="button">Refresh Users</button>
+      <div id="manageForm" class="admin-section hidden">
+        <button class="btn" id="refreshUsersBtn" type="button">Refresh Users</button>
+        <div id="usersWrap" style="overflow:auto;"></div>
+      </div>
       <div class="msg" id="adminMsg"></div>
-      <div id="usersWrap" style="overflow:auto;"></div>
     </div>
   </div>
   <script>
@@ -275,6 +307,15 @@
       } else {
         adminCard.classList.add("hidden");
       }
+    }
+
+    function setAdminView(viewId) {
+      document.querySelectorAll(".admin-section").forEach((sec) => {
+        sec.classList.toggle("hidden", sec.id !== viewId);
+      });
+      document.querySelectorAll(".admin-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-admin-view") === viewId);
+      });
     }
 
     (function hydrateToken() {
@@ -519,6 +560,9 @@
     });
 
     document.getElementById("refreshUsersBtn").addEventListener("click", loadUsers);
+    document.querySelectorAll(".admin-tab").forEach((btn) => {
+      btn.addEventListener("click", () => setAdminView(btn.getAttribute("data-admin-view")));
+    });
   </script>
 </body>
 </html>

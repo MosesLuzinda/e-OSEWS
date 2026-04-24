@@ -1,0 +1,29 @@
+<header class="site-topbar">
+  <a class="site-brand" href="/">
+    <img src="/assets/logo.png" alt="" width="40" height="40" />
+    <span class="site-brand-text">e-OSEWS <span>One Health surveillance</span></span>
+  </a>
+  <button type="button" class="nav-toggle" id="siteNavToggle" aria-controls="siteNavMenu" aria-expanded="false" aria-label="Open menu">Menu</button>
+  <nav class="site-nav" id="siteNavMenu" aria-label="Primary">
+    <a href="/" class="{% if current_page == 'home' %}is-active{% endif %}">Home</a>
+    <a href="/about" class="{% if current_page == 'about' %}is-active{% endif %}">About e-OSEWS</a>
+    <a href="/design" class="{% if current_page == 'design' %}is-active{% endif %}">Design</a>
+    <a href="/implementation" class="{% if current_page == 'implementation' %}is-active{% endif %}">Implementation</a>
+    <a href="/data-ai" class="{% if current_page == 'data_ai' %}is-active{% endif %}">Data &amp; AI</a>
+    <a href="/pilot-evaluation" class="{% if current_page == 'pilot' %}is-active{% endif %}">Pilot &amp; evaluation</a>
+    <a href="/resources" class="{% if current_page == 'resources' %}is-active{% endif %}">Resources</a>
+    <a href="/contact" class="{% if current_page == 'contact' %}is-active{% endif %}">Contact</a>
+    <a href="/dashboard" class="nav-cta {% if current_page == 'dashboard' %}is-active{% endif %}">Surveillance dashboard</a>
+  </nav>
+</header>
+<script>
+  (function () {
+    var btn = document.getElementById("siteNavToggle");
+    var nav = document.getElementById("siteNavMenu");
+    if (!btn || !nav) return;
+    btn.addEventListener("click", function () {
+      var open = nav.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  })();
+</script>

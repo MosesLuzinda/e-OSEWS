@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+eosews.db
+.DS_Store
+node_modules/
+mobile-app/node_modules/
+mobile-app/.expo/
+npm-debug.log*
+yarn-error.log*

@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>e-OSEWS Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/site.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+</head>
+<body class="page-dashboard">
+  {% include "includes/site_nav.html" %}
+  <div class="dashboard-frame">
+    <aside class="dash-sidebar" id="staffSidebar" aria-label="Staff navigation">
+      <div class="sidebar-inner">
+        <p class="sidebar-label">Dashboard menu</p>
+        <nav class="sidebar-nav">
+          <a href="#dash-overview">Overview &amp; tiles</a>
+          <a href="#panel-map">Maps &amp; summary stats</a>
+          <a href="#panel-summary">Reports &amp; live summary</a>
+          <a href="#panel-alerts">Alerts &amp; outbreaks</a>
+          <a href="#panel-ussd">USSD / SMS records</a>
+          <a href="#panel-remote">Remote sensing</a>
+          <a href="#panel-users">User management</a>
+        </nav>
+      </div>
+    </aside>
+    <button type="button" class="sidebar-toggle" id="staffSidebarToggle" title="Show or hide side menu" aria-controls="staffSidebar" aria-expanded="true">☰</button>
+    <div class="dashboard-content">
+  <div class="app-shell">
+    <header class="hero hero-dashboard">
+      <div class="hero-main">
+        <p class="eyebrow">One Health · Web command center</p>
+        <h1>e-OSEWS Surveillance Dashboard</h1>
+        <p class="subtitle">Professional district intelligence view aligned with field operations: events, alerts, high-risk signals, and data-quality flags.</p>
+      </div>
+      <div class="hero-badges">
+        <span class="badge badge-live">System live</span>
+        <span class="badge">Mobile parity metrics</span>
+        <span class="badge badge-muted">Public dashboard mode</span>
+      </div>
+    </header>
+
+    <section class="controls" id="dashboardLoginCard">
+      <div class="section-head">
+        <h2>Dashboard Login</h2>
+        <p>Sign in to view surveillance data, maps, and records.</p>
+      </div>
+      <div class="control-grid">
+        <label class="field">
+          <span>Username</span>
+          <input id="dashUsername" type="text" placeholder="e.g. admin" />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input id="dashPassword" type="password" placeholder="Enter password" />
+        </label>
+        <div class="button-row">
+          <button class="btn btn-primary" id="dashLoginBtn" type="button">Sign In</button>
+        </div>
+      </div>
+      <p id="dashLoginStatus" class="status-line">Please login to continue.</p>
+    </section>
+
+    <div id="protectedContent" style="display:none;">
+    <section class="overview-block" id="dash-overview">
+      <div class="overview-head">
+        <h2>Operations overview</h2>
+        <p class="overview-sub">Same four headline indicators as the field app dashboard. Tap a tile to load that dataset on demand.</p>
+      </div>
+      <div class="stat-grid stat-grid-dashboard" role="group" aria-label="Key surveillance counts">
+        <button type="button" class="stat-tile stat-tile-events" data-metric-view="events" title="Load event records">
+          <span class="stat-tile-label">Events</span>
+          <span class="stat-tile-value" id="dash-stat-events">{{ stats.total_events }}</span>
+        </button>
+        <button type="button" class="stat-tile stat-tile-alerts" data-metric-view="alerts" title="Load alert records">
+          <span class="stat-tile-label">Alerts</span>
+          <span class="stat-tile-value" id="dash-stat-alerts">{{ stats.total_alerts }}</span>
+        </button>
+        <button type="button" class="stat-tile stat-tile-risk" data-metric-view="highrisk" title="Load high-risk records">
+          <span class="stat-tile-label">High risk</span>
+          <span class="stat-tile-value" id="dash-stat-highrisk">{{ stats.high_risk_events }}</span>
+        </button>
+        <button type="button" class="stat-tile stat-tile-flags" data-metric-view="flags" title="Load data-flag records">
+          <span class="stat-tile-label">Data flags</span>
+          <span class="stat-tile-value" id="dash-stat-flagged">{{ stats.flagged_events }}</span>
+        </button>
+      </div>
+      <div class="stat-grid-secondary">
+        <button type="button" class="stat-tile stat-tile-env" data-metric-view="env" title="Load environmental observation records">
+          <span class="stat-tile-label">Environmental observation points</span>
+          <span class="stat-tile-value" id="dash-stat-env">{{ stats.total_env_points }}</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="section-head">
+        <h2>Live Controls</h2>
+        <p>Filter and refresh operational intelligence streams.</p>
+      </div>
+      <div class="control-grid">
+        <label class="field">
+          <span>District</span>
+          <select id="districtFilter">
+            <option value="">All</option>
+            <option value="Kabale">Kabale</option>
+            <option value="Rubanda">Rubanda</option>
+            <option value="Isingiro">Isingiro</option>
+          </select>
+        </label>
+        <label class="checkbox-field">
+          <input id="highRiskOnly" type="checkbox" />
+          <span>High risk only</span>
+        </label>
+        <div class="button-row">
+          <button class="btn btn-primary" id="loadMapBtn" type="button">Load Live Map</button>
+          <button class="btn btn-secondary" id="loadSummaryBtn" type="button">Load Live Summary</button>
+        </div>
+      </div>
+      <p id="liveStatus" class="status-line">Ready.</p>
+    </section>
+
+    <main class="grid">
+      <section class="panel panel-full" id="panel-metric-view" style="display:none;">
+        <div class="panel-head">
+          <h2 id="metricTitle">Records</h2>
+          <p id="metricSub">Click a summary button above to load records.</p>
+        </div>
+        <div class="table-wrap" id="metricBody"></div>
+      </section>
+
+      <section class="panel" id="panel-map">
+        <div class="panel-head">
+          <h2>Geospatial event map</h2>
+          <p>Red markers: high-risk signals. Aligns with the mobile app’s mapped submissions after you load with your token.</p>
+        </div>
+        <div id="map"></div>
+      </section>
+
+      <section class="panel" id="panel-summary">
+        <div class="panel-head">
+          <h2>Live summary</h2>
+          <p>Same payload as <code>GET /api/summary</code> on the phone: district scope, events, high risk, <strong>data flags</strong>, alert pipeline, env points.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>District</th>
+            <th>Events</th>
+            <th>High risk</th>
+            <th>Data flags</th>
+            <th>Alerts</th>
+            <th>New</th>
+            <th>Investigating</th>
+            <th>Env points</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody">
+          <tr><td colspan="8">Choose district and click <strong>Load live summary</strong>.</td></tr>
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-alerts" style="display:none;">
+        <div class="panel-head">
+          <h2>Latest alerts</h2>
+          <p>Current alert queue with severity and workflow status.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>Time</th><th>District</th><th>Parish</th><th>Type</th><th>Severity</th><th>Status</th><th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in alerts %}
+          <tr>
+            <td>{{ a.created_at }}</td>
+            <td>{{ a.district }}</td>
+            <td>{{ a.parish }}</td>
+            <td>{{ a.alert_type }}</td>
+            <td>{{ a.severity }}</td>
+            <td>{{ a.status or 'new' }}</td>
+            <td>{{ a.signal_score }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-events" style="display:none;">
+        <div class="panel-head">
+          <h2>Recent events</h2>
+          <p>Latest structured reports from mobile and USSD channels. <strong>Data flags</strong> correspond to validation status on each row.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>District</th>
+            <th>Parish</th>
+            <th>Syndrome</th>
+            <th>Risk</th>
+            <th>High risk</th>
+            <th>Validation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+          <tr class="{% if e.validation_status == 'flagged' %}row-flagged{% elif e.high_risk %}row-highrisk{% endif %}">
+            <td>{{ e.created_at }}</td>
+            <td>{{ e.district }}</td>
+            <td>{{ e.parish }}</td>
+            <td>{{ e.syndrome }}</td>
+            <td>{{ e.risk_score }}</td>
+            <td>{{ 'Yes' if e.high_risk else 'No' }}</td>
+            <td><span class="pill-status pill-{{ e.validation_status or 'ok' }}">{{ e.validation_status or 'ok' }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-remote">
+        <div class="panel-head">
+          <h2>Environmental signals (remote sensing context)</h2>
+          <p>Rainfall, NDVI, and temperature context from field and sensing sources.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>Observed At</th><th>District</th><th>Parish</th><th>Rainfall</th><th>NDVI</th><th>Temp (C)</th><th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for env in env_rows %}
+          <tr>
+            <td>{{ env.observed_at }}</td>
+            <td>{{ env.district }}</td>
+            <td>{{ env.parish }}</td>
+            <td>{{ env.rainfall_index }}</td>
+            <td>{{ env.ndvi_index }}</td>
+            <td>{{ env.temperature_c }}</td>
+            <td>{{ env.source }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-ussd">
+        <div class="panel-head">
+          <h2>USSD / SMS records</h2>
+          <p>Community-reported signals that mirror USSD-style structured fields in the mobile app. Full message logs and carrier delivery receipts can be linked here when integrated.</p>
+        </div>
+        <p class="status-line" style="margin:0;color:var(--muted)">Placeholder: connect outbound SMS gateway logs and USSD session analytics to this view for audit and completeness checks.</p>
+      </section>
+
+      <section class="panel" id="panel-users">
+        <div class="panel-head">
+          <h2>User management</h2>
+          <p>Roles, permissions, facility linkage, and USSD short codes per site—mirroring the mobile app’s role-based access model.</p>
+        </div>
+        <p class="status-line" style="margin:0;color:var(--muted)">Placeholder: administrative CRUD for users is available via the API; a web UI can list district users, reset tokens, and map devices here.</p>
+      </section>
+
+      <section class="panel" id="panel-fao">
+        <div class="panel-head">
+          <h2>Rift Valley Fever Intelligence (FAO references)</h2>
+          <p>External knowledge links for preparedness, early warning, and operations planning.</p>
+        </div>
+        <div class="fao-grid">
+          <article class="fao-card">
+            <h3>RVF Decision Support Tool</h3>
+            <p>One Health early-warning platform model combining satellite data, climate trends, surveillance, and expert interpretation.</p>
+            <a href="https://www.fao.org/animal-health/resources/tools/rvf-dst/en" target="_blank" rel="noopener noreferrer">Open RVF DST</a>
+          </article>
+          <article class="fao-card">
+            <h3>RVF Video Brief</h3>
+            <p>“What you need to know about Rift Valley fever” for transmission pathways, signs, prevention, and response basics.</p>
+            <a href="https://www.fao.org/animal-health/resources/tools/rvf-dst/en" target="_blank" rel="noopener noreferrer">View video source page</a>
+          </article>
+          <article class="fao-card">
+            <h3>Recent Operational News</h3>
+            <p>Field training and integrated early-warning workshop updates relevant for district rollout and adoption planning.</p>
+            <a href="https://www.fao.org/animal-health/resources/tools/rvf-dst/en" target="_blank" rel="noopener noreferrer">Read latest RVF DST updates</a>
+          </article>
+          <article class="fao-card">
+            <h3>Early Warning & EMPRES-AH</h3>
+            <p>Reference resources for anticipatory action, disease intelligence coordination, and national preparedness workflows.</p>
+            <a href="https://www.fao.org/animal-health/areas-of-work/early-warning-and-disease-intelligence/en" target="_blank" rel="noopener noreferrer">Open early warning resources</a>
+          </article>
+        </div>
+      </section>
+    </main>
+    </div>
+  </div>
+    </div>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ></script>
+  <script>
+    const map = L.map("map").setView([-1.25, 29.9], 9);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+    let markersLayer = L.layerGroup().addTo(map);
+
+    const TOKEN_KEY = "EOSEWS_DASH_API_TOKEN";
+    const AUTH_KEY = "EOSEWS_DASH_AUTH";
+
+    function getToken() {
+      return localStorage.getItem(TOKEN_KEY) || "";
+    }
+
+    function setStatus(message, isError = false) {
+      const el = document.getElementById("liveStatus");
+      el.textContent = message;
+      el.classList.toggle("status-error", isError);
+      el.classList.toggle("status-success", !isError);
+    }
+
+    function setLoginStatus(message, isError = false) {
+      const el = document.getElementById("dashLoginStatus");
+      el.textContent = message;
+      el.classList.toggle("status-error", isError);
+      el.classList.toggle("status-success", !isError);
+    }
+
+    function unlockDashboard(auth) {
+      document.getElementById("dashboardLoginCard").style.display = "none";
+      document.getElementById("protectedContent").style.display = "block";
+      setStatus(`Welcome ${auth.username}. Loading dashboard...`);
+      loadSummary();
+      loadMap();
+    }
+
+    function setButtonLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.classList.toggle("is-loading", loading);
+    }
+
+    function renderMapFeatures(features, districtFilter = "") {
+      markersLayer.clearLayers();
+      const selected = features.filter(
+        (f) =>
+          (!districtFilter || f.properties.district === districtFilter) &&
+          Number.isFinite(f.geometry.coordinates[0]) &&
+          Number.isFinite(f.geometry.coordinates[1]) &&
+          !(f.geometry.coordinates[0] === 0 && f.geometry.coordinates[1] === 0)
+      );
+      selected.forEach((f) => {
+        const lat = f.geometry.coordinates[1];
+        const lon = f.geometry.coordinates[0];
+        const color = f.properties.high_risk ? "#dc2626" : "#2563eb";
+        const marker = L.circleMarker([lat, lon], {
+          radius: 6,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.7,
+        });
+        marker.bindPopup(
+          `<strong>${f.properties.district} / ${f.properties.parish}</strong><br>` +
+          `Syndrome: ${f.properties.syndrome}<br>` +
+          `Risk: ${f.properties.risk_score}<br>` +
+          `High risk: ${f.properties.high_risk}`
+        );
+        markersLayer.addLayer(marker);
+      });
+      return selected.length;
+    }
+
+    function updateDashboardStats(s) {
+      const pairs = [
+        ["dash-stat-events", s.total_events],
+        ["dash-stat-alerts", s.total_alerts],
+        ["dash-stat-highrisk", s.high_risk_events],
+        ["dash-stat-flagged", s.flagged_events ?? 0],
+        ["dash-stat-env", s.env_points ?? 0],
+      ];
+      pairs.forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      });
+    }
+
+    function renderRowsTable(headers, rows) {
+      if (!rows.length) {
+        return `<p class="status-line">No records found for this view.</p>`;
+      }
+      const head = `<tr>${headers.map((h) => `<th>${h.key}</th>`).join("")}</tr>`;
+      const body = rows
+        .map((row) => `<tr>${headers.map((h) => `<td>${row[h.val] ?? ""}</td>`).join("")}</tr>`)
+        .join("");
+      return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+    }
+
+    async function loadMetricView(view) {
+      const token = getToken();
+      if (!token) {
+        setStatus("Login required.", true);
+        return;
+      }
+      const district = document.getElementById("districtFilter").value;
+      const metricPanel = document.getElementById("panel-metric-view");
+      const titleEl = document.getElementById("metricTitle");
+      const subEl = document.getElementById("metricSub");
+      const bodyEl = document.getElementById("metricBody");
+      const params = new URLSearchParams({ limit: "50" });
+      if (district) params.set("district", district);
+
+      let url = "";
+      let title = "";
+      let subtitle = "";
+      let headers = [];
+
+      if (view === "events") {
+        url = `/api/events?${params.toString()}`;
+        title = "Events records";
+        subtitle = "Latest submitted events including reporter GPS coordinates.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Syndrome", val: "syndrome" },
+          { key: "Risk", val: "risk_score" },
+          { key: "Latitude", val: "latitude" },
+          { key: "Longitude", val: "longitude" },
+        ];
+      } else if (view === "alerts") {
+        url = `/api/alerts?${params.toString()}`;
+        title = "Alerts records";
+        subtitle = "Alert stream now includes reporter GPS coordinates and reporter IP.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Type", val: "alert_type" },
+          { key: "Severity", val: "severity" },
+          { key: "Score", val: "signal_score" },
+          { key: "Reporter Lat", val: "reporter_latitude" },
+          { key: "Reporter Lon", val: "reporter_longitude" },
+          { key: "Reporter IP", val: "reporter_ip" },
+        ];
+      } else if (view === "highrisk") {
+        params.set("high_risk_only", "true");
+        url = `/api/events?${params.toString()}`;
+        title = "High-risk records";
+        subtitle = "Only high-risk event records.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Syndrome", val: "syndrome" },
+          { key: "Risk", val: "risk_score" },
+          { key: "Latitude", val: "latitude" },
+          { key: "Longitude", val: "longitude" },
+        ];
+      } else if (view === "env") {
+        url = `/api/environment?${params.toString()}`;
+        title = "Environmental observation records";
+        subtitle = "Submitted environmental points supporting risk context.";
+        headers = [
+          { key: "Observed At", val: "observed_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Rainfall", val: "rainfall_index" },
+          { key: "NDVI", val: "ndvi_index" },
+          { key: "Temp C", val: "temperature_c" },
+          { key: "Source", val: "source" },
+        ];
+      } else {
+        url = `/api/events/flags?${params.toString()}&status=flagged`;
+        title = "Data flags records";
+        subtitle = "Flagged data-quality records requiring review.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Syndrome", val: "syndrome" },
+          { key: "Validation", val: "validation_status" },
+          { key: "Latitude", val: "latitude" },
+          { key: "Longitude", val: "longitude" },
+        ];
+      }
+
+      try {
+        bodyEl.innerHTML = `<div class="shimmer-block"></div>`;
+        const res = await fetch(url, { headers: { "X-API-Token": token } });
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : [];
+        titleEl.textContent = title;
+        subEl.textContent = subtitle;
+        bodyEl.innerHTML = renderRowsTable(headers, rows);
+        metricPanel.style.display = "block";
+        metricPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        metricPanel.classList.add("panel-flash");
+        setTimeout(() => metricPanel.classList.remove("panel-flash"), 1400);
+        setStatus(`Loaded ${rows.length} ${view} record(s).`);
+      } catch (e) {
+        setStatus(`Load failed: ${e.message}`, true);
+      }
+    }
+
+    document.querySelectorAll("[data-metric-view]").forEach((btn) => {
+      btn.addEventListener("click", () => loadMetricView(btn.getAttribute("data-metric-view")));
+    });
+
+    async function loadMap() {
+      const token = getToken();
+      if (!token) {
+        setStatus("Login required.", true);
+        return;
+      }
+      setButtonLoading("loadMapBtn", true);
+      const district = document.getElementById("districtFilter").value;
+      const highRiskOnly = document.getElementById("highRiskOnly").checked;
+      const params = new URLSearchParams({ limit: "500", high_risk_only: String(highRiskOnly) });
+      if (district) params.set("district", district);
+      const url = `/api/geo/events?${params.toString()}`;
+      try {
+        const res = await fetch(url, { headers: { "X-API-Token": token } });
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        const data = await res.json();
+        const count = renderMapFeatures(data.features || [], district);
+        setStatus(`Loaded ${count} live events on map.`);
+      } catch (e) {
+        setStatus(`Map load failed: ${e.message}`, true);
+      } finally {
+        setButtonLoading("loadMapBtn", false);
+      }
+    }
+
+    async function loadSummary() {
+      const token = getToken();
+      if (!token) {
+        setStatus("Login required.", true);
+        return;
+      }
+      setButtonLoading("loadSummaryBtn", true);
+      const district = document.getElementById("districtFilter").value;
+      const params = new URLSearchParams();
+      if (district) params.set("district", district);
+      try {
+        const res = await fetch(`/api/summary?${params.toString()}`, {
+          headers: { "X-API-Token": token },
+        });
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        const s = await res.json();
+        updateDashboardStats(s);
+        document.getElementById("summaryBody").innerHTML =
+          `<tr><td>${s.district || "All"}</td><td>${s.total_events}</td><td>${s.high_risk_events}</td><td>${s.flagged_events ?? 0}</td><td>${s.total_alerts}</td><td>${s.new_alerts}</td><td>${s.investigating_alerts}</td><td>${s.env_points}</td></tr>`;
+        setStatus("Loaded live summary — headline tiles updated to match mobile scope.");
+      } catch (e) {
+        setStatus(`Summary load failed: ${e.message}`, true);
+      } finally {
+        setButtonLoading("loadSummaryBtn", false);
+      }
+    }
+
+    document.getElementById("loadMapBtn").addEventListener("click", loadMap);
+    document.getElementById("loadSummaryBtn").addEventListener("click", loadSummary);
+
+    // Show available event GPS points immediately from server-rendered recent events.
+    const seedFeatures = [
+      {% for e in events %}
+      {
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [{{ e.longitude or 0 }}, {{ e.latitude or 0 }}] },
+        properties: {
+          district: "{{ e.district }}",
+          parish: "{{ e.parish }}",
+          syndrome: "{{ e.syndrome }}",
+          risk_score: "{{ e.risk_score }}",
+          high_risk: {{ "true" if e.high_risk else "false" }}
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+    const initialCount = renderMapFeatures(seedFeatures, "");
+    if (initialCount > 0) {
+      setStatus(`Loaded ${initialCount} event GPS point(s).`);
+    }
+
+    async function dashLogin() {
+      const username = document.getElementById("dashUsername").value.trim();
+      const password = document.getElementById("dashPassword").value.trim();
+      if (!username || !password) {
+        setLoginStatus("Username and password are required.", true);
+        return;
+      }
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Login failed (${res.status})`);
+        localStorage.setItem(TOKEN_KEY, data.api_token);
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ username: data.username, role: data.role }));
+        setLoginStatus(`Login successful: ${data.username}`, false);
+        unlockDashboard(data);
+      } catch (e) {
+        setLoginStatus(e.message || "Login failed.", true);
+      }
+    }
+
+    document.getElementById("dashLoginBtn").addEventListener("click", dashLogin);
+    document.getElementById("dashPassword").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") dashLogin();
+    });
+
+    (function restoreDashSession() {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (token && raw) {
+        try {
+          const auth = JSON.parse(raw);
+          unlockDashboard(auth);
+          setLoginStatus(`Restored session for ${auth.username}.`);
+        } catch {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(AUTH_KEY);
+        }
+      }
+    })();
+
+    (function () {
+      var side = document.getElementById("staffSidebar");
+      var btn = document.getElementById("staffSidebarToggle");
+      if (!side || !btn) return;
+      btn.addEventListener("click", function () {
+        var collapsed = side.classList.toggle("collapsed");
+        btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      });
+    })();
+  </script>
+</body>
+</html>

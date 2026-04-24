@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "e-OSEWS: Dev (backend + Expo)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/dev-all.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "e-OSEWS: Backend (Flask)",
+      "type": "shell",
+      "command": "python -m app.main",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "e-OSEWS: Expo (LAN :8081)",
+      "type": "shell",
+      "command": "powershell -NoProfile -Command \"Remove-Item Env:CI -ErrorAction SilentlyContinue; npx expo start --lan -p 8081\"",
+      "options": {
+        "cwd": "${workspaceFolder}/mobile-app"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

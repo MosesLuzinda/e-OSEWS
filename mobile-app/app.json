@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "e-OSEWS Mobile",
+    "slug": "eosews-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0b1738"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon-foreground.png",
+        "backgroundColor": "#0b1738"
+      },
+      "package": "com.eosews.mobile"
+    }
+  }
+}

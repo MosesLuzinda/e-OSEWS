@@ -1,0 +1,82 @@
+{% extends "layout_site.html" %}
+{% block page_title %}Resources{% endblock %}
+{% block content %}
+<section class="site-hero">
+  <p class="kicker">Tools for the field</p>
+  <h1>Resources</h1>
+  <p class="lead">Training packages, job aids, and technical references for implementers and partners.</p>
+</section>
+
+<article class="content-card">
+  <h2>Training materials</h2>
+  <ul>
+    <li>Slide decks (PPT) for district orientation, facility rollout, and VHT/vet cascades.</li>
+    <li>Flowcharts for triage, escalation, and specimen referral where RVF testing is indicated.</li>
+    <li>Case definitions harmonised with national RVF and maternal syndromic surveillance guidance.</li>
+    <li>PPE and safe sampling reminders for clinical and veterinary staff.</li>
+  </ul>
+  <p><em>Placeholder:</em> attach final PDFs/PPTs here when cleared for public distribution; until then, request access through the <a href="/contact">contact</a> page.</p>
+</article>
+
+<article class="content-card">
+  <h2>Job aids</h2>
+  <p>Pocket cards and posters for <strong>VHTs</strong>, <strong>veterinarians</strong>, <strong>traditional birth attendants (where applicable)</strong>, and <strong>midwives</strong>—with pictorial prompts, local language hooks, and district-specific contact numbers for rapid reporting.</p>
+</article>
+
+<article class="content-card">
+  <h2>Technical documents</h2>
+  <ul>
+    <li>e-OSEWS system architecture (mobile app, API, database, web dashboard).</li>
+    <li>Data dictionary for events, alerts, environmental observations, and audit logs.</li>
+    <li>API design: authentication, role scopes, summary endpoints, and validation hooks.</li>
+  </ul>
+</article>
+
+<article class="content-card" id="media">
+  <h2>Media and external knowledge</h2>
+  <p>Curated learning resources inspired by RVF early warning practice. The layout and content are customized for e-OSEWS, while acknowledging FAO public materials as reference.</p>
+  <div class="media-grid">
+    <div class="media-card">
+      <div class="media-thumb">RVF video brief</div>
+      <div class="media-body">
+        <h3>What you need to know about RVF</h3>
+        <p>Transmission routes, signs, and practical prevention/control actions for field teams.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.fao.org/animal-health/resources/tools/rvf-dst/en" target="_blank" rel="noopener noreferrer">Open source page</a>
+        </div>
+      </div>
+    </div>
+    <div class="media-card">
+      <div class="media-thumb">Decision support</div>
+      <div class="media-body">
+        <h3>RVF DST feature overview</h3>
+        <p>Examples of how environmental data and surveillance streams can support anticipatory action.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.fao.org/animal-health/resources/tools/rvf-dst/en" target="_blank" rel="noopener noreferrer">View RVF DST</a>
+        </div>
+      </div>
+    </div>
+    <div class="media-card">
+      <div class="media-thumb">Early warning</div>
+      <div class="media-body">
+        <h3>Disease intelligence reference</h3>
+        <p>Guidance to strengthen early warning workflows and district-level preparedness actions.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.fao.org/animal-health/areas-of-work/early-warning-and-disease-intelligence/en" target="_blank" rel="noopener noreferrer">Open link</a>
+        </div>
+      </div>
+    </div>
+    <div class="media-card">
+      <div class="media-thumb">Program context</div>
+      <div class="media-body">
+        <h3>EMPRES-AH programme context</h3>
+        <p>Background on emergency prevention systems and coordinated animal-health preparedness.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.fao.org/animal-health/our-programmes/emergency-prevention-system-for-animal-health-(empres-ah)/en" target="_blank" rel="noopener noreferrer">Open link</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="source-note">Reference source: FAO Animal Health RVF DST resources and related links.</p>
+</article>
+{% endblock %}

@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report Case | e-OSEWS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      background: radial-gradient(circle at 10% -10%, #1f3f8b 0%, #0b1738 45%, #070f24 100%);
+      color: #e6eeff;
+      margin: 0;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+    .bg-orb {
+      position: fixed;
+      border-radius: 9999px;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(1px);
+      animation: floatY 8s ease-in-out infinite;
+      opacity: 0.45;
+    }
+    .orb-top {
+      width: 300px;
+      height: 300px;
+      right: -70px;
+      top: -80px;
+      background: radial-gradient(circle, rgba(39, 73, 255, 0.9), rgba(39, 73, 255, 0.15));
+    }
+    .orb-bottom {
+      width: 340px;
+      height: 340px;
+      left: -90px;
+      bottom: -130px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.9), rgba(14, 165, 233, 0.14));
+      animation-delay: 1.2s;
+    }
+    .wrap { max-width:980px; margin:24px auto; padding:16px; position: relative; z-index: 1; }
+    .card { background:#101f47; border:1px solid #2b4c93; border-radius:14px; padding:18px; box-shadow: 0 18px 38px rgba(0,0,0,0.24); margin-bottom: 14px; }
+    .auth-card {
+      background: #0f1f46;
+      border-color: #345aa7;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+    }
+    .auth-logo {
+      width: 250px;
+      max-width: 100%;
+      display: block;
+      margin: 0 auto 10px;
+      object-fit: contain;
+    }
+    h1 { margin:0 0 8px; font-size:24px; letter-spacing: -0.02em; }
+    .muted { color:#a9c0ee; margin:0 0 14px; }
+    .auth-card h1 { text-align: center; margin-bottom: 4px; }
+    .auth-card .muted { text-align: center; margin-bottom: 14px; }
+    label { display:block; font-size:12px; margin:10px 0 4px; color:#bdd0f8; font-weight:700; letter-spacing: 0.01em; }
+    input, select { width:100%; padding:11px; border-radius:10px; border:1px solid #284786; background:#122453; color:#f2f7ff; transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease; }
+    input:focus, select:focus { border-color:#7db2ff; outline:none; box-shadow:0 0 0 2px rgba(64,131,255,0.25); }
+    input:hover, select:hover { border-color:#4d71bc; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btn { margin-top:12px; width:100%; background:linear-gradient(135deg,#2563eb,#1e4fd1); color:#fff; border:0; border-radius:10px; padding:12px; font-weight:700; cursor:pointer; transition: transform 0.15s ease, box-shadow 0.18s ease, filter 0.2s ease; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(37,99,235,0.28); }
+    .btn:active { transform: translateY(0); filter: brightness(0.98); }
+    .msg { margin-top:10px; font-size:13px; }
+    a { color:#9fc5ff; }
+    .hidden { display:none; }
+    .usersTable { width:100%; border-collapse: collapse; margin-top:8px; }
+    .usersTable th, .usersTable td { border:1px solid #2b4c93; padding:8px; font-size:12px; text-align:left; }
+    .usersTable th { background:#152a5a; }
+    .usersTable button { background:#1e40af; color:#fff; border:0; border-radius:6px; padding:6px 8px; cursor:pointer; }
+    .helper { color:#95addf; font-size:11px; margin-top:4px; }
+    .submit-success {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #2f7f58;
+      background: #0f2f24;
+      color: #baf7d7;
+      font-size: 13px;
+      display: none;
+    }
+    .admin-switch {
+      display:flex;
+      gap:8px;
+      margin: 8px 0 12px;
+      flex-wrap: wrap;
+    }
+    .admin-tab {
+      background:#162d64;
+      border:1px solid #365faa;
+      color:#cfe0ff;
+      border-radius:999px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+    }
+    .admin-tab.active {
+      background:#2563eb;
+      border-color:#5ca0ff;
+      color:#fff;
+    }
+    .admin-section.hidden {
+      display:none;
+    }
+    .section-title {
+      margin: 18px 0 10px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9fc2ff;
+      font-weight: 800;
+    }
+    .form-block {
+      border: 1px solid #2c4d92;
+      border-radius: 12px;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(17, 34, 78, 0.95), rgba(15, 31, 70, 0.95));
+      margin-bottom: 12px;
+    }
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .actions-row .btn {
+      margin-top: 0;
+      flex: 1 1 220px;
+    }
+    .report-hint {
+      margin: 8px 0 0;
+      color: #9bb6e8;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      .wrap { margin: 12px auto; }
+    }
+    @keyframes floatY {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-18px); }
+      100% { transform: translateY(0px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-top"></div>
+  <div class="bg-orb orb-bottom"></div>
+  <div class="wrap">
+    <div class="card auth-card">
+      <img class="auth-logo" src="/assets/logo.png" alt="e-OSEWS logo" />
+      <h1>Report Case</h1>
+      <p class="muted">Mobile-app logic on web: structured event submission with role/district/species/syndrome fields.</p>
+      <div class="grid">
+        <div>
+          <label>Username</label>
+          <input id="username" placeholder="e.g. vht_demo" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" placeholder="Enter password" />
+        </div>
+      </div>
+      <button class="btn" id="loginBtn" type="button" style="margin-top:10px;">Login & Save Token</button>
+
+      <label>API Token</label>
+      <input id="token" type="password" placeholder="Paste X-API-Token" />
+      <div class="msg" id="loginMsg"></div>
+    </div>
+
+    <div class="card hidden" id="reportCard">
+      <h1>Submit Case</h1>
+      <p class="muted">Logged in session. Submit event report with GPS coordinates.</p>
+      <div class="form-block">
+        <div class="section-title">Reporter identity</div>
+        <div class="grid">
+          <div>
+            <label>Reporter Role</label>
+            <select id="reporter_role">
+              <option>midwife</option><option>clinician</option><option>vet</option><option>vht</option>
+            </select>
+          </div>
+          <div>
+            <label>District</label>
+            <select id="district">
+              <option>Kabale</option><option>Rubanda</option><option>Isingiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>Reporter Name</label>
+            <input id="reporter_name" placeholder="Full name" />
+          </div>
+          <div>
+            <label>Reporter Contact</label>
+            <input id="reporter_contact" placeholder="Phone number" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-block">
+        <div class="section-title">Case context</div>
+        <div class="grid">
+          <div>
+            <label>Parish</label>
+            <select id="parish"></select>
+          </div>
+          <div>
+            <label>Species / Patient</label>
+            <select id="species_or_patient"></select>
+          </div>
+        </div>
+        <label>Syndrome</label>
+        <select id="syndrome"></select>
+      </div>
+
+      <div class="form-block">
+        <div class="section-title">Risk and environment metrics</div>
+        <div class="grid">
+          <div>
+            <label>Gestational Weeks</label>
+            <input id="gestational_weeks" type="number" value="24" />
+          </div>
+          <div>
+            <label>Animal Exposure</label>
+            <select id="animal_exposure"><option value="false">false</option><option value="true">true</option></select>
+            <div class="helper">Auto-set from role/species; you can still override.</div>
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>Rainfall Index (0-1)</label>
+            <input id="rainfall_index" type="number" min="0" max="1" step="0.01" value="0.8" />
+          </div>
+          <div>
+            <label>NDVI Index (0-1)</label>
+            <input id="ndvi_index" type="number" min="0" max="1" step="0.01" value="0.7" />
+          </div>
+        </div>
+        <label>Temperature C</label>
+        <input id="temperature_c" type="number" step="0.1" value="31" />
+        <p class="report-hint">GPS coordinates are captured automatically from your current device location during submission.</p>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn" id="submitBtn" type="button">Submit Case</button>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="submit-success" id="submitSuccessBox"></div>
+      <p class="muted" style="margin-top:14px;"><a href="/dashboard">Open dashboard</a> · <a href="/">Back to landing</a></p>
+    </div>
+
+    <div class="card hidden" id="adminCard">
+      <h1>Admin User Management</h1>
+      <p class="muted">Admin privileges: create users, edit role/district, activate/deactivate, and reset API token.</p>
+      <div class="admin-switch">
+        <button type="button" class="admin-tab active" data-admin-view="createForm">Create User</button>
+        <button type="button" class="admin-tab" data-admin-view="manageForm">Manage Existing Users</button>
+      </div>
+      <div id="createForm" class="admin-section">
+        <div class="grid">
+          <div>
+            <label>New Username</label>
+            <input id="newUsername" placeholder="e.g. district_new" />
+          </div>
+          <div>
+            <label>New Password</label>
+            <input id="newPassword" type="password" placeholder="Set password" />
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>New Role</label>
+            <select id="newRole">
+              <option>vht</option><option>vet</option><option>clinician</option><option>midwife</option><option>district</option><option>admin</option>
+            </select>
+          </div>
+          <div>
+            <label>New District</label>
+            <select id="newDistrict">
+              <option value="">None</option><option>Kabale</option><option>Rubanda</option><option>Isingiro</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn" id="createUserBtn" type="button">Create User</button>
+      </div>
+      <div id="manageForm" class="admin-section hidden">
+        <button class="btn" id="refreshUsersBtn" type="button">Refresh Users</button>
+        <div id="usersWrap" style="overflow:auto;"></div>
+      </div>
+      <div class="msg" id="adminMsg"></div>
+    </div>
+  </div>
+  <script>
+    async function getGeo() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) return resolve({ latitude: -1.25, longitude: 29.98 });
+        navigator.geolocation.getCurrentPosition(
+          (p) => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
+          () => resolve({ latitude: -1.25, longitude: 29.98 }),
+          { enableHighAccuracy: false, timeout: 5000 }
+        );
+      });
+    }
+
+    const TOKEN_KEY = "EOSEWS_WEB_API_TOKEN";
+    const AUTH_KEY = "EOSEWS_WEB_AUTH";
+    const parishByDistrict = {
+      Kabale: ["Kitumba", "Kyanamira", "Buhara"],
+      Rubanda: ["Muko", "Hamurwa", "Bufundi"],
+      Isingiro: ["Nyakagyeme", "Kabuyanda", "Masha"]
+    };
+    const speciesByRole = {
+      midwife: ["pregnant_woman"],
+      clinician: ["pregnant_woman"],
+      vet: ["cattle", "goat", "sheep"],
+      vht: ["pregnant_woman", "cattle", "goat", "sheep"],
+      district: ["pregnant_woman", "cattle", "goat", "sheep"],
+      admin: ["pregnant_woman", "cattle", "goat", "sheep"]
+    };
+    const syndromeByRole = {
+      midwife: ["fever and miscarriage", "haemorrhagic fever", "febrile illness in pregnancy"],
+      clinician: ["haemorrhagic fever", "severe febrile illness", "suspected RVF case"],
+      vet: ["animal abortion", "sudden animal death", "livestock fever cluster"],
+      vht: ["fever in pregnant woman", "animal abortion", "sudden animal death"],
+      district: ["fever in pregnant woman", "animal abortion", "sudden animal death"],
+      admin: ["fever in pregnant woman", "animal abortion", "sudden animal death"]
+    };
+
+    function setMsg(text, ok = false, id = "msg") {
+      const msg = document.getElementById(id);
+      msg.style.color = ok ? "#bbf7d0" : "#fecaca";
+      msg.textContent = text;
+    }
+
+    function setSubmitSuccess(text = "") {
+      const box = document.getElementById("submitSuccessBox");
+      if (!text) {
+        box.style.display = "none";
+        box.textContent = "";
+        return;
+      }
+      box.textContent = text;
+      box.style.display = "block";
+    }
+
+    function showAuthedUI(auth) {
+      document.getElementById("reportCard").classList.remove("hidden");
+      syncDynamicOptions();
+      const adminCard = document.getElementById("adminCard");
+      if (auth?.role === "admin") {
+        adminCard.classList.remove("hidden");
+        loadUsers();
+      } else {
+        adminCard.classList.add("hidden");
+      }
+    }
+
+    function setAdminView(viewId) {
+      document.querySelectorAll(".admin-section").forEach((sec) => {
+        sec.classList.toggle("hidden", sec.id !== viewId);
+      });
+      document.querySelectorAll(".admin-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-admin-view") === viewId);
+      });
+    }
+
+    (function hydrateToken() {
+      const saved = localStorage.getItem(TOKEN_KEY);
+      if (saved) {
+        document.getElementById("token").value = saved;
+      }
+      const authSaved = localStorage.getItem(AUTH_KEY);
+      if (saved && authSaved) {
+        try {
+          const auth = JSON.parse(authSaved);
+          showAuthedUI(auth);
+          setMsg(`Welcome back ${auth.username}.`, true, "loginMsg");
+        } catch {}
+      }
+    })();
+
+    function defaultAnimalExposure(species, role) {
+      if (species === "pregnant_woman") return "false";
+      if (role === "vet") return "true";
+      if (species === "cattle" || species === "goat" || species === "sheep") return "true";
+      return "false";
+    }
+
+    function setSelectOptions(selectEl, options, preferred) {
+      selectEl.innerHTML = options.map((o) => `<option value="${o}">${o}</option>`).join("");
+      if (preferred && options.includes(preferred)) {
+        selectEl.value = preferred;
+      }
+    }
+
+    function syncDynamicOptions() {
+      const role = document.getElementById("reporter_role").value;
+      const district = document.getElementById("district").value;
+      const parishEl = document.getElementById("parish");
+      const speciesEl = document.getElementById("species_or_patient");
+      const syndromeEl = document.getElementById("syndrome");
+      const exposureEl = document.getElementById("animal_exposure");
+
+      const parishOptions = parishByDistrict[district] || ["Kitumba"];
+      const speciesOptions = speciesByRole[role] || ["pregnant_woman"];
+      const syndromeOptions = syndromeByRole[role] || ["fever and miscarriage"];
+
+      setSelectOptions(parishEl, parishOptions, parishEl.value);
+      setSelectOptions(speciesEl, speciesOptions, speciesEl.value);
+      setSelectOptions(syndromeEl, syndromeOptions, syndromeEl.value);
+      exposureEl.value = defaultAnimalExposure(speciesEl.value, role);
+    }
+
+    document.getElementById("reporter_role").addEventListener("change", syncDynamicOptions);
+    document.getElementById("district").addEventListener("change", syncDynamicOptions);
+    document.getElementById("species_or_patient").addEventListener("change", () => {
+      const role = document.getElementById("reporter_role").value;
+      const species = document.getElementById("species_or_patient").value;
+      document.getElementById("animal_exposure").value = defaultAnimalExposure(species, role);
+    });
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!username || !password) {
+        setMsg("Username and password are required.");
+        return;
+      }
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Login failed with ${res.status}`);
+        const token = data.api_token || "";
+        if (!token) throw new Error("No api_token returned by server.");
+        document.getElementById("token").value = token;
+        localStorage.setItem(TOKEN_KEY, token);
+        if (data.district) document.getElementById("district").value = data.district;
+        if (data.role) document.getElementById("reporter_role").value = data.role;
+        syncDynamicOptions();
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ username: data.username, role: data.role, district: data.district }));
+        showAuthedUI(data);
+        setMsg(`Logged in as ${data.username}. Token saved for this browser.`, true, "loginMsg");
+      } catch (e) {
+        setMsg(e.message || "Login failed.", false, "loginMsg");
+      }
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+      setSubmitSuccess("");
+      const token = document.getElementById("token").value.trim();
+      if (!token) {
+        setMsg("API token is required.");
+        return;
+      }
+      localStorage.setItem(TOKEN_KEY, token);
+      const geo = await getGeo();
+      const payload = {
+        reporter_role: document.getElementById("reporter_role").value,
+        reporter_name: document.getElementById("reporter_name").value.trim(),
+        reporter_contact: document.getElementById("reporter_contact").value.trim(),
+        district: document.getElementById("district").value,
+        parish: document.getElementById("parish").value.trim(),
+        species_or_patient: document.getElementById("species_or_patient").value.trim(),
+        syndrome: document.getElementById("syndrome").value.trim(),
+        gestational_weeks: Number(document.getElementById("gestational_weeks").value || 0),
+        animal_exposure: document.getElementById("animal_exposure").value === "true",
+        rainfall_index: Number(document.getElementById("rainfall_index").value || 0),
+        ndvi_index: Number(document.getElementById("ndvi_index").value || 0),
+        temperature_c: Number(document.getElementById("temperature_c").value || 0),
+        latitude: geo.latitude,
+        longitude: geo.longitude
+      };
+      try {
+        const res = await fetch("/api/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-API-Token": token },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Request failed with ${res.status}`);
+        const eventId = data.id || "n/a";
+        const ts = new Date().toLocaleString();
+        setMsg(`Submitted. Event ID: ${eventId}`, true);
+        setSubmitSuccess(`Report submitted successfully. Event ID: ${eventId}. Submitted at: ${ts}`);
+      } catch (e) {
+        setMsg(e.message);
+        setSubmitSuccess("");
+      }
+    });
+
+    async function loadUsers() {
+      const token = document.getElementById("token").value.trim();
+      if (!token) return;
+      try {
+        const res = await fetch("/api/users", { headers: { "X-API-Token": token } });
+        const rows = await res.json().catch(() => []);
+        if (!res.ok) throw new Error(rows.error || `Load failed ${res.status}`);
+        const table = `
+          <table class="usersTable">
+            <thead><tr><th>Username</th><th>Role</th><th>District</th><th>Active</th><th>Token</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${rows.map((u) => `
+                <tr>
+                  <td>${u.username}</td>
+                  <td>
+                    <select id="role_${u.username}">
+                      ${["admin","district","vht","vet","clinician","midwife"].map((r) => `<option value="${r}" ${u.role===r?"selected":""}>${r}</option>`).join("")}
+                    </select>
+                  </td>
+                  <td>
+                    <select id="district_${u.username}">
+                      ${["","Kabale","Rubanda","Isingiro"].map((d) => `<option value="${d}" ${(u.district||"")===d?"selected":""}>${d || "None"}</option>`).join("")}
+                    </select>
+                  </td>
+                  <td>${u.is_active ? "yes" : "no"}</td>
+                  <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">${u.api_token}</td>
+                  <td>
+                    <button type="button" onclick="toggleUser('${u.username}', ${u.is_active ? "false" : "true"})">${u.is_active ? "Deactivate" : "Activate"}</button>
+                    <button type="button" onclick="saveUser('${u.username}')">Save role/district</button>
+                    <button type="button" onclick="resetToken('${u.username}')">Reset token</button>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+        document.getElementById("usersWrap").innerHTML = table;
+        setMsg(`Loaded ${rows.length} users.`, true, "adminMsg");
+      } catch (e) {
+        setMsg(e.message || "Failed to load users.", false, "adminMsg");
+      }
+    }
+
+    async function patchUser(username, payload) {
+      const token = document.getElementById("token").value.trim();
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-API-Token": token },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Update failed ${res.status}`);
+      return data;
+    }
+
+    window.toggleUser = async function (username, active) {
+      try {
+        await patchUser(username, { is_active: active });
+        await loadUsers();
+      } catch (e) {
+        setMsg(e.message, false, "adminMsg");
+      }
+    };
+
+    window.resetToken = async function (username) {
+      try {
+        await patchUser(username, { reset_api_token: true });
+        await loadUsers();
+      } catch (e) {
+        setMsg(e.message, false, "adminMsg");
+      }
+    };
+
+    window.saveUser = async function (username) {
+      try {
+        const role = document.getElementById(`role_${username}`).value;
+        const district = document.getElementById(`district_${username}`).value || null;
+        await patchUser(username, { role, district });
+        await loadUsers();
+      } catch (e) {
+        setMsg(e.message, false, "adminMsg");
+      }
+    };
+
+    document.getElementById("createUserBtn").addEventListener("click", async () => {
+      const token = document.getElementById("token").value.trim();
+      const username = document.getElementById("newUsername").value.trim();
+      const password = document.getElementById("newPassword").value.trim();
+      const role = document.getElementById("newRole").value;
+      const district = document.getElementById("newDistrict").value || null;
+      if (!token || !username || !password) {
+        setMsg("Token, new username and password are required.", false, "adminMsg");
+        return;
+      }
+      try {
+        const res = await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-API-Token": token },
+          body: JSON.stringify({ username, password, role, district })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Create failed ${res.status}`);
+        document.getElementById("newUsername").value = "";
+        document.getElementById("newPassword").value = "";
+        setMsg(`User ${data.username} created.`, true, "adminMsg");
+        await loadUsers();
+      } catch (e) {
+        setMsg(e.message, false, "adminMsg");
+      }
+    });
+
+    document.getElementById("refreshUsersBtn").addEventListener("click", loadUsers);
+    document.querySelectorAll(".admin-tab").forEach((btn) => {
+      btn.addEventListener("click", () => setAdminView(btn.getAttribute("data-admin-view")));
+    });
+  </script>
+</body>
+</html>

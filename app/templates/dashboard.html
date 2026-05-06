@@ -1,0 +1,1618 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>e-OSEWS Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/site.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+</head>
+<body class="page-dashboard">
+  {% include "includes/site_nav.html" %}
+  <div class="dashboard-frame">
+    <aside class="dash-sidebar" id="staffSidebar" aria-label="Staff navigation">
+      <div class="sidebar-inner">
+        <p class="sidebar-label">Dashboard menu</p>
+        <nav class="sidebar-nav">
+          <a href="#dash-overview">Overview &amp; tiles</a>
+          <a href="#panel-map">Maps &amp; summary stats</a>
+          <a href="#panel-summary">Reports &amp; live summary</a>
+          <a href="#panel-alerts">Alerts &amp; outbreaks</a>
+          <a href="#panel-ussd">USSD / SMS records</a>
+          <a href="#panel-remote">Remote sensing</a>
+          <a href="#panel-users">User management</a>
+          <a href="#panel-rvf">RVF intelligence</a>
+        </nav>
+      </div>
+    </aside>
+    <button type="button" class="sidebar-toggle" id="staffSidebarToggle" title="Show or hide side menu" aria-controls="staffSidebar" aria-expanded="true">☰</button>
+    <div class="dashboard-content">
+  <div class="app-shell">
+    <header class="hero hero-dashboard">
+      <div class="hero-main">
+        <p class="eyebrow">One Health · Web command center</p>
+        <h1>e-OSEWS Surveillance Dashboard</h1>
+        <p class="subtitle">Professional district intelligence view aligned with field operations: events, alerts, high-risk signals, and data-quality flags.</p>
+      </div>
+      <div class="hero-badges">
+        <span class="badge badge-live">System live</span>
+        <span class="badge">Mobile parity metrics</span>
+        <span class="badge badge-muted">Public dashboard mode</span>
+      </div>
+    </header>
+
+    <section class="overview-block" id="dash-overview">
+      <div class="overview-head">
+        <h2>Operations overview</h2>
+        <p class="overview-sub">Public summary tiles with live district filters. Tap a tile to load exact records on demand.</p>
+      </div>
+      <div class="stat-grid stat-grid-dashboard" role="group" aria-label="Key surveillance counts">
+        <button type="button" class="stat-tile stat-tile-events" data-metric-view="events" title="Load event records">
+          <span class="stat-tile-label">Events</span>
+          <span class="stat-tile-value" id="dash-stat-events">{{ stats.total_events }}</span>
+        </button>
+        <button type="button" class="stat-tile stat-tile-alerts" data-metric-view="alerts" title="Load alert records">
+          <span class="stat-tile-label">Alerts</span>
+          <span class="stat-tile-value" id="dash-stat-alerts">{{ stats.total_alerts }}</span>
+        </button>
+        <button type="button" class="stat-tile stat-tile-risk" data-metric-view="highrisk" title="Load high-risk records">
+          <span class="stat-tile-label">High risk</span>
+          <span class="stat-tile-value" id="dash-stat-highrisk">{{ stats.high_risk_events }}</span>
+        </button>
+        <button type="button" class="stat-tile stat-tile-flags" data-metric-view="flags" title="Load data-flag records">
+          <span class="stat-tile-label">Data flags</span>
+          <span class="stat-tile-value" id="dash-stat-flagged">{{ stats.flagged_events }}</span>
+        </button>
+      </div>
+      <div class="stat-grid-secondary">
+        <button type="button" class="stat-tile stat-tile-env" data-metric-view="env" title="Load environmental observation records">
+          <span class="stat-tile-label">Environmental observation points</span>
+          <span class="stat-tile-value" id="dash-stat-env">{{ stats.total_env_points }}</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="section-head">
+        <h2>Live Controls</h2>
+        <p>Filter and refresh operational intelligence streams. Login is only required when submitting a case.</p>
+      </div>
+      <div class="control-grid">
+        <label class="field">
+          <span>District</span>
+          <select id="districtFilter">
+            <option value="">All</option>
+            <option value="Kabale">Kabale</option>
+            <option value="Rubanda">Rubanda</option>
+            <option value="Isingiro">Isingiro</option>
+          </select>
+        </label>
+        <label class="checkbox-field">
+          <input id="highRiskOnly" type="checkbox" />
+          <span>High risk only</span>
+        </label>
+        <div class="button-row">
+          <button class="btn btn-primary" id="loadMapBtn" type="button">Load Live Map</button>
+          <button class="btn btn-secondary" id="loadSummaryBtn" type="button">Load Live Summary</button>
+        </div>
+      </div>
+      <p id="liveStatus" class="status-line">Ready.</p>
+    </section>
+
+    <main class="grid">
+      <section class="panel panel-full" id="panel-metric-view" style="display:none;">
+        <div class="panel-head">
+          <h2 id="metricTitle">Records</h2>
+          <p id="metricSub">Click a summary button above to load records.</p>
+        </div>
+        <div class="table-wrap" id="metricBody"></div>
+      </section>
+
+      <section class="panel" id="panel-map">
+        <div class="panel-head">
+          <h2>Geospatial event map</h2>
+          <p>Click any district on the right to fly the map to it. Switch basemaps, toggle layers, filter by period, and zoom in / out.</p>
+        </div>
+        <div class="map-toolbar" role="toolbar" aria-label="Map tools">
+          <div class="map-toolbar-group" role="group" aria-label="Basemap">
+            <button type="button" class="map-tool-btn is-active" data-basemap="streets" title="Streets basemap">Streets</button>
+            <button type="button" class="map-tool-btn" data-basemap="satellite" title="Satellite imagery">Satellite</button>
+            <button type="button" class="map-tool-btn" data-basemap="dark" title="Dark basemap">Dark</button>
+            <button type="button" class="map-tool-btn" data-basemap="topo" title="Topographic basemap">Topo</button>
+          </div>
+          <div class="map-toolbar-group" role="group" aria-label="Time period">
+            <button type="button" class="map-tool-btn" data-period="7"  title="Last 7 days">7d</button>
+            <button type="button" class="map-tool-btn" data-period="30" title="Last 30 days">30d</button>
+            <button type="button" class="map-tool-btn" data-period="90" title="Last 90 days">90d</button>
+            <button type="button" class="map-tool-btn is-active" data-period="all" title="All available">All</button>
+          </div>
+          <div class="map-toolbar-group" role="group" aria-label="Layer toggles">
+            <label class="map-toggle"><input type="checkbox" id="layerEvents" checked /> <span>Events</span></label>
+            <label class="map-toggle"><input type="checkbox" id="layerHighRisk" checked /> <span>High-risk halos</span></label>
+            <label class="map-toggle"><input type="checkbox" id="layerDistricts" checked /> <span>Districts</span></label>
+          </div>
+          <div class="map-toolbar-group" role="group" aria-label="Map actions">
+            <button type="button" class="map-tool-btn" id="mapZoomInBtn" title="Zoom in">
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="map-tool-btn" id="mapZoomOutBtn" title="Zoom out">
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path d="M5 11h14v2H5z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="map-tool-btn" id="mapFitBtn" title="Fit map to data">
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 0h2v5h-5v-2h3v-3z" fill="currentColor"/></svg>
+              <span>Fit</span>
+            </button>
+            <button type="button" class="map-tool-btn" id="mapLocateBtn" title="Locate me (uses browser GPS)">
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M12 7a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z" fill="currentColor"/></svg>
+              <span>Locate</span>
+            </button>
+            <button type="button" class="map-tool-btn" id="mapFullscreenBtn" title="Toggle fullscreen">
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path d="M5 5h6v2H7v4H5V5zm14 0v6h-2V7h-4V5h6zM5 19v-6h2v4h4v2H5zm14 0h-6v-2h4v-4h2v6z" fill="currentColor"/></svg>
+              <span>Full</span>
+            </button>
+          </div>
+        </div>
+        <div class="map-stage" id="mapStage">
+          <aside class="map-sidebar" id="mapSidebar" aria-label="Locations">
+            <header class="map-sidebar-head">
+              <span>Locations</span>
+              <small>Click to focus</small>
+            </header>
+            <ul class="map-loc-list" id="mapLocList">
+              <li class="map-loc" data-loc="all">
+                <span class="map-loc-dot map-loc-dot-all"></span>
+                <div class="map-loc-meta">
+                  <strong>All pilot districts</strong>
+                  <small>Region overview</small>
+                </div>
+                <span class="map-loc-count" id="locCountAll">0</span>
+              </li>
+              <li class="map-loc" data-loc="Kabale">
+                <span class="map-loc-dot"></span>
+                <div class="map-loc-meta">
+                  <strong>Kabale</strong>
+                  <small>South-western highlands</small>
+                </div>
+                <span class="map-loc-count" id="locCountKabale">0</span>
+              </li>
+              <li class="map-loc" data-loc="Rubanda">
+                <span class="map-loc-dot"></span>
+                <div class="map-loc-meta">
+                  <strong>Rubanda</strong>
+                  <small>Bordering Bwindi</small>
+                </div>
+                <span class="map-loc-count" id="locCountRubanda">0</span>
+              </li>
+              <li class="map-loc" data-loc="Isingiro">
+                <span class="map-loc-dot"></span>
+                <div class="map-loc-meta">
+                  <strong>Isingiro</strong>
+                  <small>Cattle corridor</small>
+                </div>
+                <span class="map-loc-count" id="locCountIsingiro">0</span>
+              </li>
+            </ul>
+            <footer class="map-sidebar-foot">
+              <button type="button" class="rvf-cta" data-rvf-modal="vector-ecology">Why district focus matters &rarr;</button>
+            </footer>
+          </aside>
+          <div id="map"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-summary">
+        <div class="panel-head">
+          <h2>Live summary</h2>
+          <p>Same structure as mobile summary: district scope, events, high risk, <strong>data flags</strong>, alert pipeline, and environmental points.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>District</th>
+            <th>Events</th>
+            <th>High risk</th>
+            <th>Data flags</th>
+            <th>Alerts</th>
+            <th>New</th>
+            <th>Investigating</th>
+            <th>Env points</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody">
+          <tr><td colspan="8">Choose district and click <strong>Load live summary</strong>.</td></tr>
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-alerts">
+        <div class="panel-head">
+          <h2>Latest alerts</h2>
+          <p>Current alert queue with severity and workflow status.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>Time</th><th>District</th><th>Parish</th><th>Type</th><th>Severity</th><th>Status</th><th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in alerts %}
+          <tr>
+            <td>{{ a.created_at }}</td>
+            <td>{{ a.district }}</td>
+            <td>{{ a.parish }}</td>
+            <td>{{ a.alert_type }}</td>
+            <td>{{ a.severity }}</td>
+            <td>{{ a.status or 'new' }}</td>
+            <td>{{ a.signal_score }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-events">
+        <div class="panel-head">
+          <h2>Recent events</h2>
+          <p>Latest structured reports from mobile and USSD channels. <strong>Data flags</strong> correspond to validation status on each row.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>District</th>
+            <th>Parish</th>
+            <th>Syndrome</th>
+            <th>Risk</th>
+            <th>High risk</th>
+            <th>Validation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+          <tr class="{% if e.validation_status == 'flagged' %}row-flagged{% elif e.high_risk %}row-highrisk{% endif %}">
+            <td>{{ e.created_at }}</td>
+            <td>{{ e.district }}</td>
+            <td>{{ e.parish }}</td>
+            <td>{{ e.syndrome }}</td>
+            <td>{{ e.risk_score }}</td>
+            <td>{{ 'Yes' if e.high_risk else 'No' }}</td>
+            <td><span class="pill-status pill-{{ e.validation_status or 'ok' }}">{{ e.validation_status or 'ok' }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-remote">
+        <div class="panel-head">
+          <h2>Environmental signals (remote sensing context)</h2>
+          <p>Rainfall, NDVI, and temperature context from field and sensing sources.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+        <thead>
+          <tr>
+            <th>Observed At</th><th>District</th><th>Parish</th><th>Rainfall</th><th>NDVI</th><th>Temp (C)</th><th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for env in env_rows %}
+          <tr>
+            <td>{{ env.observed_at }}</td>
+            <td>{{ env.district }}</td>
+            <td>{{ env.parish }}</td>
+            <td>{{ env.rainfall_index }}</td>
+            <td>{{ env.ndvi_index }}</td>
+            <td>{{ env.temperature_c }}</td>
+            <td>{{ env.source }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-ussd">
+        <div class="panel-head">
+          <h2>USSD / SMS records</h2>
+          <p>Community-reported signals that mirror USSD-style structured fields in the mobile app. Full message logs and carrier delivery receipts can be linked here when integrated.</p>
+        </div>
+        <p class="status-line" style="margin:0;color:var(--muted)">Placeholder: connect outbound SMS gateway logs and USSD session analytics to this view for audit and completeness checks.</p>
+      </section>
+
+      <section class="panel" id="panel-users">
+        <div class="panel-head">
+          <h2>User management</h2>
+          <p>Roles, permissions, facility linkage, and USSD short codes per site—mirroring the mobile app’s role-based access model.</p>
+        </div>
+        <p class="status-line" style="margin:0;color:var(--muted)">Placeholder: administrative CRUD for users is available via the API; a web UI can list district users, reset tokens, and map devices here.</p>
+      </section>
+
+      <section class="panel panel-full rvf-intel" id="panel-rvf" aria-label="Rift Valley Fever Intelligence Center">
+        <div class="rvf-hero">
+          <div class="rvf-hero-text">
+            <span class="rvf-eyebrow">One Health · Anticipatory action</span>
+            <h2>Rift Valley Fever Intelligence Center</h2>
+            <p>
+              The e-OSEWS RVF intelligence center combines satellite signals, climate trends, field surveillance, and expert review
+              to predict outbreaks <strong>up to three months in advance</strong> &mdash; turning data into early action for farmers,
+              veterinarians, clinicians, and policymakers across Isingiro, Rubanda, and Kabale.
+            </p>
+            <div class="rvf-hero-actions">
+              <button type="button" class="btn btn-primary" data-rvf-jump="panel-map">Open live map</button>
+              <button type="button" class="btn btn-secondary" data-rvf-jump="panel-alerts">View alerts</button>
+            </div>
+          </div>
+          <div class="rvf-hero-art" aria-hidden="true">
+            <div class="rvf-hero-tile rvf-hero-tile-1"></div>
+            <div class="rvf-hero-tile rvf-hero-tile-2"></div>
+            <div class="rvf-hero-tile rvf-hero-tile-3"></div>
+            <div class="rvf-hero-tile rvf-hero-tile-4"></div>
+          </div>
+        </div>
+
+        <div class="rvf-objectives">
+          <h3 class="rvf-section-title">Objectives <span class="rvf-section-tag">click any card</span></h3>
+          <div class="rvf-obj-grid">
+            <button type="button" class="rvf-obj" data-rvf-modal="obj-predict">
+              <span class="rvf-obj-num">01</span>
+              <h4>Predict hotspots</h4>
+              <p>Identify potential RVF hotspots two to three months in advance using environmental and climate data.</p>
+            </button>
+            <button type="button" class="rvf-obj" data-rvf-modal="obj-integrate">
+              <span class="rvf-obj-num">02</span>
+              <h4>Integrate intelligence</h4>
+              <p>Combine real-time and historical disease intelligence with district-level field reports.</p>
+            </button>
+            <button type="button" class="rvf-obj" data-rvf-modal="obj-alert">
+              <span class="rvf-obj-num">03</span>
+              <h4>Issue timely alerts</h4>
+              <p>Trigger alerts in collaboration with partners so districts can launch rapid preventive measures.</p>
+            </button>
+            <button type="button" class="rvf-obj" data-rvf-modal="obj-strengthen">
+              <span class="rvf-obj-num">04</span>
+              <h4>Strengthen surveillance</h4>
+              <p>Build environmental surveillance, risk analysis, and early-action planning at national and regional level.</p>
+            </button>
+          </div>
+        </div>
+
+        <div class="rvf-pipeline">
+          <h3 class="rvf-section-title">How our intelligence pipeline works <span class="rvf-section-tag">click a step</span></h3>
+          <ol class="rvf-steps">
+            <li class="rvf-step" data-rvf-modal="step-sense" tabindex="0" role="button">
+              <span class="rvf-step-no">1</span>
+              <div>
+                <h4>Sense</h4>
+                <p>Rainfall, NDVI, temperature, and satellite anomalies feed into our environmental layer for hotspot detection.</p>
+              </div>
+            </li>
+            <li class="rvf-step" data-rvf-modal="step-report" tabindex="0" role="button">
+              <span class="rvf-step-no">2</span>
+              <div>
+                <h4>Report</h4>
+                <p>VHTs, vets, clinicians, and TBAs submit structured cases via mobile and USSD &mdash; including GPS, syndrome, and exposures.</p>
+              </div>
+            </li>
+            <li class="rvf-step" data-rvf-modal="step-score" tabindex="0" role="button">
+              <span class="rvf-step-no">3</span>
+              <div>
+                <h4>Score</h4>
+                <p>AI risk-scoring and spatiotemporal anomaly detection turn raw signals into ranked hotspots and individual-level risk.</p>
+              </div>
+            </li>
+            <li class="rvf-step" data-rvf-modal="step-alert" tabindex="0" role="button">
+              <span class="rvf-step-no">4</span>
+              <div>
+                <h4>Alert</h4>
+                <p>District focal persons receive prioritized alerts, with one-tap escalation, status workflow, and audit trail.</p>
+              </div>
+            </li>
+            <li class="rvf-step" data-rvf-modal="step-act" tabindex="0" role="button">
+              <span class="rvf-step-no">5</span>
+              <div>
+                <h4>Act</h4>
+                <p>Vaccination, vector control, clinical readiness, and risk communication launched <em>before</em> outbreaks escalate.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="rvf-why">
+          <h3 class="rvf-section-title">Why it matters</h3>
+          <p class="rvf-why-lead">
+            RVF continues to threaten food security, trade, and public health across Africa. Outbreaks often follow heavy rains and flooding,
+            devastating livestock herds and the communities that depend on them. Timely prediction and early action save livelihoods and lives.
+          </p>
+          <div class="rvf-stats">
+            <button type="button" class="rvf-stat rvf-stat-forecast" data-rvf-modal="obj-predict">
+              <span class="rvf-stat-num">2&ndash;3 mo.</span>
+              <span class="rvf-stat-label">advance prediction window targeted by e-OSEWS</span>
+            </button>
+            <button type="button" class="rvf-stat rvf-stat-onehealth" data-rvf-modal="obj-integrate">
+              <span class="rvf-stat-num">1 Health</span>
+              <span class="rvf-stat-label">animal &middot; human &middot; environment, all in one view</span>
+            </button>
+            <button type="button" class="rvf-stat rvf-stat-coverage" data-rvf-jump="panel-map">
+              <span class="rvf-stat-num">3 Districts</span>
+              <span class="rvf-stat-label">Isingiro, Rubanda, Kabale pilot footprint</span>
+            </button>
+            <button type="button" class="rvf-stat rvf-stat-uptime" data-rvf-jump="panel-ussd">
+              <span class="rvf-stat-num">24/7</span>
+              <span class="rvf-stat-label">offline-first reporting on mobile and USSD</span>
+            </button>
+          </div>
+          <div class="rvf-data-variants" aria-label="Data design variations">
+            <button type="button" class="rvf-chip" data-rvf-jump="panel-summary">Summary view</button>
+            <button type="button" class="rvf-chip" data-rvf-jump="panel-events">Event stream</button>
+            <button type="button" class="rvf-chip" data-rvf-jump="panel-remote">Environmental context</button>
+            <button type="button" class="rvf-chip" data-rvf-jump="panel-alerts">Alert queue</button>
+          </div>
+        </div>
+
+        <div class="rvf-media">
+          <h3 class="rvf-section-title">Multimedia briefings <span class="rvf-section-tag">click to play</span></h3>
+          <div class="rvf-media-grid">
+            <article class="rvf-clip rvf-clip-blue" data-rvf-modal="rvf-overview" tabindex="0" role="button" aria-label="Open Rift Valley fever overview clip">
+              <div class="rvf-clip-frame">
+                <svg class="rvf-clip-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="skyA" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stop-color="#1a59b8"/>
+                      <stop offset="1" stop-color="#2bb18a"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="180" fill="url(#skyA)"/>
+                  <circle cx="260" cy="40" r="22" fill="#ffd97a" opacity="0.85"/>
+                  <path d="M0 130 Q 80 110 160 130 T 320 130 L 320 180 L 0 180 Z" fill="#0e3a82" opacity="0.75"/>
+                  <path d="M0 150 Q 80 140 160 150 T 320 150 L 320 180 L 0 180 Z" fill="#062553"/>
+                  <g class="rvf-anim-cattle">
+                    <ellipse cx="60" cy="138" rx="22" ry="10" fill="#f4d6b0"/>
+                    <rect x="48" y="120" width="20" height="14" rx="3" fill="#f4d6b0"/>
+                    <circle cx="56" cy="125" r="2" fill="#3a2d1c"/>
+                  </g>
+                  <g class="rvf-anim-person">
+                    <circle cx="220" cy="118" r="7" fill="#f4d6b0"/>
+                    <rect x="214" y="125" width="12" height="22" rx="3" fill="#1c4fa7"/>
+                  </g>
+                  <g class="rvf-anim-mosquito">
+                    <ellipse cx="150" cy="80" rx="3" ry="2" fill="#1a1a1a"/>
+                    <line x1="145" y1="78" x2="155" y2="82" stroke="#1a1a1a" stroke-width="0.6"/>
+                    <line x1="146" y1="82" x2="154" y2="78" stroke="#1a1a1a" stroke-width="0.6"/>
+                  </g>
+                </svg>
+                <button type="button" class="rvf-play" aria-label="Play overview clip" data-rvf-modal="rvf-overview">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                </button>
+                <span class="rvf-clip-duration">1:48</span>
+              </div>
+              <h4>Rift Valley fever overview</h4>
+              <span class="rvf-clip-tag">Clinical briefing</span>
+              <p>Transmission routes, clinical signs, and key prevention &amp; control actions for community and clinical teams.</p>
+              <button type="button" class="rvf-cta" data-rvf-modal="rvf-overview">Watch overview &rarr;</button>
+            </article>
+
+            <article class="rvf-clip rvf-clip-green" data-rvf-modal="vector-ecology" tabindex="0" role="button" aria-label="Open vector ecology clip">
+              <div class="rvf-clip-frame rvf-clip-rain">
+                <svg class="rvf-clip-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect width="320" height="180" fill="#1c3458"/>
+                  <g class="rvf-anim-rain">
+                    <line x1="20" y1="0" x2="14" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="60" y1="0" x2="54" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="100" y1="0" x2="94" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="140" y1="0" x2="134" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="180" y1="0" x2="174" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="220" y1="0" x2="214" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="260" y1="0" x2="254" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                    <line x1="300" y1="0" x2="294" y2="22" stroke="#a7d6ff" stroke-width="1.2"/>
+                  </g>
+                  <path d="M0 130 Q 80 100 160 130 T 320 130 L 320 180 L 0 180 Z" fill="#1f6b3a"/>
+                  <path d="M0 150 Q 80 130 160 150 T 320 150 L 320 180 L 0 180 Z" fill="#0e4a23"/>
+                  <g class="rvf-anim-pond">
+                    <ellipse cx="160" cy="160" rx="80" ry="8" fill="#1a59b8" opacity="0.5"/>
+                    <ellipse cx="160" cy="160" rx="50" ry="5" fill="#a7d6ff" opacity="0.6"/>
+                  </g>
+                </svg>
+                <button type="button" class="rvf-play" aria-label="Play vector clip" data-rvf-modal="vector-ecology">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                </button>
+                <span class="rvf-clip-duration">2:12</span>
+              </div>
+              <h4>Vector ecology &amp; climate drivers</h4>
+              <span class="rvf-clip-tag">Environmental lens</span>
+              <p>Heavy rains, flooding, and vegetation flushes drive mosquito populations and amplify RVF transmission risk.</p>
+              <button type="button" class="rvf-cta" data-rvf-modal="vector-ecology">Watch vector clip &rarr;</button>
+            </article>
+
+            <article class="rvf-clip rvf-clip-purple" data-rvf-modal="voices" tabindex="0" role="button" aria-label="Open voices of impact clip">
+              <div class="rvf-clip-frame rvf-clip-voices">
+                <svg class="rvf-clip-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect width="320" height="180" fill="#0f2f63"/>
+                  <g class="rvf-anim-bubble" transform="translate(40 40)">
+                    <rect x="0" y="0" width="120" height="44" rx="22" fill="#ffffff"/>
+                    <circle cx="20" cy="22" r="10" fill="#1a59b8"/>
+                    <rect x="36" y="14" width="74" height="6" rx="3" fill="#cfd9ee"/>
+                    <rect x="36" y="24" width="56" height="6" rx="3" fill="#cfd9ee"/>
+                  </g>
+                  <g class="rvf-anim-bubble rvf-anim-bubble-2" transform="translate(150 90)">
+                    <rect x="0" y="0" width="140" height="44" rx="22" fill="#ffd97a"/>
+                    <circle cx="20" cy="22" r="10" fill="#0f2f63"/>
+                    <rect x="36" y="14" width="86" height="6" rx="3" fill="#0f2f63" opacity="0.4"/>
+                    <rect x="36" y="24" width="64" height="6" rx="3" fill="#0f2f63" opacity="0.4"/>
+                  </g>
+                </svg>
+                <button type="button" class="rvf-play" aria-label="Play voices clip" data-rvf-modal="voices">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                </button>
+                <span class="rvf-clip-duration">1:32</span>
+              </div>
+              <h4>Voices of impact</h4>
+              <span class="rvf-clip-tag">Field insights</span>
+              <p>Farmers, veterinarians, and policymakers describe how anticipatory action keeps herds and communities safe.</p>
+              <button type="button" class="rvf-cta" data-rvf-modal="voices">Watch voices &rarr;</button>
+            </article>
+          </div>
+        </div>
+
+        <div class="rvf-news">
+          <h3 class="rvf-section-title">News, alerts &amp; resources</h3>
+          <div class="rvf-news-grid">
+            <article class="rvf-news-card rvf-tag-news">
+              <span class="rvf-news-kind">News</span>
+              <h4>Integrated early warning training for district focal persons</h4>
+              <p>Hands-on workshops train focal persons on the e-OSEWS surveillance dashboard, structured reporting, and outbreak response.</p>
+              <a class="rvf-cta" href="/briefings/training">Read story &rarr;</a>
+            </article>
+            <article class="rvf-news-card rvf-tag-alert">
+              <span class="rvf-news-kind">Alert</span>
+              <h4>Seasonal RVF risk advisory</h4>
+              <p>Risk assessments and forecasts for the region, with coordinated preparedness and anticipatory action triggers.</p>
+              <a class="rvf-cta" href="/briefings/seasonal-advisory">View advisory &rarr;</a>
+            </article>
+            <article class="rvf-news-card rvf-tag-pub">
+              <span class="rvf-news-kind">Publication</span>
+              <h4>Rift Valley fever action framework</h4>
+              <p>Guidance for decision makers on responding to RVF outbreaks or risk, and developing a national action plan.</p>
+              <a class="rvf-cta" href="/briefings/action-framework">Open framework &rarr;</a>
+            </article>
+            <article class="rvf-news-card rvf-tag-brochure">
+              <span class="rvf-news-kind">Brochure</span>
+              <h4>Driving preparedness through innovation</h4>
+              <p>How a web-based RVF early warning platform supports anticipatory action, contingency planning, and One Health coordination.</p>
+              <a class="rvf-cta" href="/briefings/innovation">Read brochure &rarr;</a>
+            </article>
+          </div>
+          <p class="rvf-attribution">
+            All content above opens in this app. For deeper background, see external references:
+            <a class="rvf-link-btn" href="/resources#media">View references &rarr;</a>
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+    </div>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ></script>
+  <script>
+    /* ============================================================
+       Geospatial event map — multi-basemap, smooth zoom, district
+       overlays, location side-list with fly-to-focus interaction.
+       ============================================================ */
+    const PILOT_DISTRICTS = {
+      Kabale:   { center: [-1.2486, 29.9897], radiusKm: 14, color: "#1a59b8" },
+      Rubanda:  { center: [-1.2400, 29.7900], radiusKm: 12, color: "#2bb18a" },
+      Isingiro: { center: [-0.8333, 30.8333], radiusKm: 22, color: "#d97706" },
+    };
+    const REGION_BOUNDS = L.latLngBounds([-1.55, 29.55], [-0.50, 31.10]);
+
+    const basemaps = {
+      streets: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19, attribution: "&copy; OpenStreetMap contributors",
+      }),
+      satellite: L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, attribution: "Tiles &copy; Esri" }
+      ),
+      dark: L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        { maxZoom: 19, attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd" }
+      ),
+      topo: L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, attribution: "Tiles &copy; Esri" }
+      ),
+    };
+
+    const map = L.map("map", {
+      zoomControl: false,
+      zoomSnap: 0.25,
+      zoomDelta: 0.5,
+      wheelPxPerZoomLevel: 80,
+      worldCopyJump: true,
+      attributionControl: true,
+    }).fitBounds(REGION_BOUNDS, { padding: [16, 16] });
+
+    let activeBasemap = basemaps.streets;
+    activeBasemap.addTo(map);
+
+    L.control.scale({ position: "bottomleft", imperial: false }).addTo(map);
+
+    const districtsLayer = L.layerGroup().addTo(map);
+    const eventsLayer = L.layerGroup().addTo(map);
+    const haloLayer = L.layerGroup().addTo(map);
+
+    function buildDistrictLayer() {
+      districtsLayer.clearLayers();
+      Object.entries(PILOT_DISTRICTS).forEach(([name, d]) => {
+        const circle = L.circle(d.center, {
+          radius: d.radiusKm * 1000,
+          color: d.color,
+          weight: 2,
+          opacity: 0.85,
+          fillColor: d.color,
+          fillOpacity: 0.08,
+          className: "district-circle",
+        });
+        circle.bindTooltip(`<strong>${name}</strong><br><small>Pilot district</small>`, {
+          direction: "top", sticky: true, className: "district-tip",
+        });
+        circle.on("click", () => flyToDistrict(name));
+        circle.addTo(districtsLayer);
+      });
+    }
+    buildDistrictLayer();
+
+    let allFeatures = [];
+    let currentDistrict = "";
+    let currentPeriodDays = null;
+
+    function setStatus(message, isError = false) {
+      const el = document.getElementById("liveStatus");
+      el.textContent = message;
+      el.classList.toggle("status-error", isError);
+      el.classList.toggle("status-success", !isError);
+    }
+
+    function setButtonLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.classList.toggle("is-loading", loading);
+    }
+
+    function colorFor(feature) {
+      if (feature.properties.high_risk) return "#dc2626";
+      const score = parseFloat(feature.properties.risk_score) || 0;
+      if (score >= 0.6) return "#f97316";
+      if (score >= 0.3) return "#eab308";
+      return "#2563eb";
+    }
+
+    function passesPeriod(feature) {
+      if (!currentPeriodDays) return true;
+      const t = feature.properties.created_at ? Date.parse(feature.properties.created_at) : NaN;
+      if (!Number.isFinite(t)) return true;
+      const cutoff = Date.now() - currentPeriodDays * 86400 * 1000;
+      return t >= cutoff;
+    }
+
+    function renderMapFeatures(features, districtFilter = "") {
+      allFeatures = features.slice();
+      currentDistrict = districtFilter || "";
+
+      eventsLayer.clearLayers();
+      haloLayer.clearLayers();
+
+      const visible = features.filter(
+        (f) =>
+          (!districtFilter || f.properties.district === districtFilter) &&
+          Number.isFinite(f.geometry.coordinates[0]) &&
+          Number.isFinite(f.geometry.coordinates[1]) &&
+          !(f.geometry.coordinates[0] === 0 && f.geometry.coordinates[1] === 0) &&
+          passesPeriod(f)
+      );
+
+      visible.forEach((f) => {
+        const lat = f.geometry.coordinates[1];
+        const lon = f.geometry.coordinates[0];
+        const c = colorFor(f);
+
+        if (f.properties.high_risk) {
+          const halo = L.circleMarker([lat, lon], {
+            radius: 16, color: "#dc2626", weight: 0,
+            fillColor: "#dc2626", fillOpacity: 0.18, className: "risk-halo",
+          });
+          halo.addTo(haloLayer);
+        }
+
+        const m = L.circleMarker([lat, lon], {
+          radius: 7, color: "#ffffff", weight: 2,
+          fillColor: c, fillOpacity: 0.95, className: "evt-marker",
+        });
+        m.bindPopup(
+          `<div class="evt-pop">` +
+          `<strong>${f.properties.district || "—"} / ${f.properties.parish || "—"}</strong>` +
+          `<div>Syndrome: ${f.properties.syndrome || "—"}</div>` +
+          `<div>Risk: ${f.properties.risk_score ?? "—"}</div>` +
+          `<div>High risk: ${f.properties.high_risk ? "Yes" : "No"}</div>` +
+          (f.properties.created_at ? `<div class="evt-pop-time">${f.properties.created_at}</div>` : "") +
+          `</div>`
+        );
+        m.addTo(eventsLayer);
+      });
+
+      updateLocationCounts(features);
+
+      if (visible.length > 0 && districtFilter) {
+        const b = L.latLngBounds(visible.map((f) => [f.geometry.coordinates[1], f.geometry.coordinates[0]]));
+        map.flyToBounds(b, { padding: [40, 40], maxZoom: 12, duration: 0.8 });
+      } else if (visible.length > 0) {
+        const b = L.latLngBounds(visible.map((f) => [f.geometry.coordinates[1], f.geometry.coordinates[0]]));
+        map.flyToBounds(b, { padding: [40, 40], maxZoom: 11, duration: 0.8 });
+      } else {
+        map.flyToBounds(REGION_BOUNDS, { padding: [16, 16], duration: 0.6 });
+      }
+      return visible.length;
+    }
+
+    function updateLocationCounts(features) {
+      const counts = { all: 0, Kabale: 0, Rubanda: 0, Isingiro: 0 };
+      features.forEach((f) => {
+        if (!passesPeriod(f)) return;
+        counts.all += 1;
+        const d = f.properties.district;
+        if (d && counts[d] !== undefined) counts[d] += 1;
+      });
+      const ids = {
+        all: "locCountAll", Kabale: "locCountKabale",
+        Rubanda: "locCountRubanda", Isingiro: "locCountIsingiro",
+      };
+      Object.entries(ids).forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = counts[k];
+      });
+    }
+
+    function flyToDistrict(name) {
+      document.querySelectorAll(".map-loc").forEach((li) =>
+        li.classList.toggle("is-active", li.getAttribute("data-loc") === name)
+      );
+      if (name === "all" || !PILOT_DISTRICTS[name]) {
+        currentDistrict = "";
+        renderMapFeatures(allFeatures, "");
+        map.flyToBounds(REGION_BOUNDS, { padding: [16, 16], duration: 0.8 });
+        return;
+      }
+      const d = PILOT_DISTRICTS[name];
+      currentDistrict = name;
+      renderMapFeatures(allFeatures, name);
+      map.flyTo(d.center, 11.5, { duration: 0.9, easeLinearity: 0.25 });
+    }
+
+    /* Legend (bottom-right) */
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create("div", "map-legend");
+      div.innerHTML = `
+        <strong>Risk legend</strong>
+        <ul>
+          <li><span class="lg-dot" style="background:#dc2626"></span> High risk</li>
+          <li><span class="lg-dot" style="background:#f97316"></span> Elevated</li>
+          <li><span class="lg-dot" style="background:#eab308"></span> Moderate</li>
+          <li><span class="lg-dot" style="background:#2563eb"></span> Low / baseline</li>
+        </ul>
+      `;
+      return div;
+    };
+    legend.addTo(map);
+
+    /* Toolbar wiring ------------------------------------------ */
+    document.querySelectorAll(".map-toolbar-group [data-basemap]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-basemap");
+        if (!basemaps[key]) return;
+        document.querySelectorAll("[data-basemap]").forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        map.removeLayer(activeBasemap);
+        activeBasemap = basemaps[key];
+        activeBasemap.addTo(map);
+      });
+    });
+
+    document.querySelectorAll("[data-period]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.getAttribute("data-period");
+        currentPeriodDays = v === "all" ? null : parseInt(v, 10);
+        document.querySelectorAll("[data-period]").forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        renderMapFeatures(allFeatures, currentDistrict);
+      });
+    });
+
+    document.getElementById("layerEvents").addEventListener("change", (ev) => {
+      if (ev.target.checked) eventsLayer.addTo(map);
+      else map.removeLayer(eventsLayer);
+    });
+    document.getElementById("layerHighRisk").addEventListener("change", (ev) => {
+      if (ev.target.checked) haloLayer.addTo(map);
+      else map.removeLayer(haloLayer);
+    });
+    document.getElementById("layerDistricts").addEventListener("change", (ev) => {
+      if (ev.target.checked) districtsLayer.addTo(map);
+      else map.removeLayer(districtsLayer);
+    });
+
+    document.getElementById("mapZoomInBtn").addEventListener("click", () => map.zoomIn(0.5));
+    document.getElementById("mapZoomOutBtn").addEventListener("click", () => map.zoomOut(0.5));
+    document.getElementById("mapFitBtn").addEventListener("click", () => {
+      const visible = allFeatures.filter(
+        (f) =>
+          Number.isFinite(f.geometry.coordinates[0]) &&
+          Number.isFinite(f.geometry.coordinates[1]) &&
+          !(f.geometry.coordinates[0] === 0 && f.geometry.coordinates[1] === 0) &&
+          (!currentDistrict || f.properties.district === currentDistrict) &&
+          passesPeriod(f)
+      );
+      if (visible.length > 0) {
+        const b = L.latLngBounds(visible.map((f) => [f.geometry.coordinates[1], f.geometry.coordinates[0]]));
+        map.flyToBounds(b, { padding: [40, 40], maxZoom: 12, duration: 0.7 });
+      } else {
+        map.flyToBounds(REGION_BOUNDS, { padding: [16, 16], duration: 0.6 });
+      }
+    });
+    document.getElementById("mapLocateBtn").addEventListener("click", () => {
+      if (!navigator.geolocation) { setStatus("Geolocation not available in this browser.", true); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 0.8 });
+          L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map)
+            .bindPopup("You are here").openPopup();
+        },
+        (err) => setStatus(`Locate failed: ${err.message}`, true),
+        { enableHighAccuracy: true, timeout: 7000 }
+      );
+    });
+    document.getElementById("mapFullscreenBtn").addEventListener("click", () => {
+      const stage = document.getElementById("mapStage");
+      if (!document.fullscreenElement) {
+        (stage.requestFullscreen ? stage.requestFullscreen() : Promise.reject())
+          .then(() => setTimeout(() => map.invalidateSize(), 200))
+          .catch(() => stage.classList.toggle("is-cssfull"));
+      } else {
+        document.exitFullscreen().then(() => setTimeout(() => map.invalidateSize(), 200));
+      }
+    });
+    document.addEventListener("fullscreenchange", () => setTimeout(() => map.invalidateSize(), 200));
+
+    document.querySelectorAll(".map-loc").forEach((li) => {
+      li.addEventListener("click", () => flyToDistrict(li.getAttribute("data-loc")));
+    });
+
+    function updateDashboardStats(s) {
+      const pairs = [
+        ["dash-stat-events", s.total_events],
+        ["dash-stat-alerts", s.total_alerts],
+        ["dash-stat-highrisk", s.high_risk_events],
+        ["dash-stat-flagged", s.flagged_events ?? 0],
+        ["dash-stat-env", s.env_points ?? 0],
+      ];
+      pairs.forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      });
+    }
+
+    function renderRowsTable(headers, rows) {
+      if (!rows.length) {
+        return `<p class="status-line">No records found for this view.</p>`;
+      }
+      const head = `<tr>${headers.map((h) => `<th>${h.key}</th>`).join("")}</tr>`;
+      const body = rows
+        .map((row) => `<tr>${headers.map((h) => `<td>${row[h.val] ?? ""}</td>`).join("")}</tr>`)
+        .join("");
+      return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+    }
+
+    async function loadMetricView(view) {
+      const district = document.getElementById("districtFilter").value;
+      const metricPanel = document.getElementById("panel-metric-view");
+      const titleEl = document.getElementById("metricTitle");
+      const subEl = document.getElementById("metricSub");
+      const bodyEl = document.getElementById("metricBody");
+      const params = new URLSearchParams({ limit: "50" });
+      if (district) params.set("district", district);
+
+      let url = "";
+      let title = "";
+      let subtitle = "";
+      let headers = [];
+
+      if (view === "events") {
+        url = `/api/public/events?${params.toString()}`;
+        title = "Events records";
+        subtitle = "Latest submitted events including reporter GPS coordinates.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Syndrome", val: "syndrome" },
+          { key: "Risk", val: "risk_score" },
+          { key: "Latitude", val: "latitude" },
+          { key: "Longitude", val: "longitude" },
+        ];
+      } else if (view === "alerts") {
+        url = `/api/public/alerts?${params.toString()}`;
+        title = "Alerts records";
+        subtitle = "Alert stream now includes reporter GPS coordinates and reporter IP.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Type", val: "alert_type" },
+          { key: "Severity", val: "severity" },
+          { key: "Score", val: "signal_score" },
+          { key: "Reporter Lat", val: "reporter_latitude" },
+          { key: "Reporter Lon", val: "reporter_longitude" },
+          { key: "Reporter IP", val: "reporter_ip" },
+        ];
+      } else if (view === "highrisk") {
+        params.set("high_risk_only", "true");
+        url = `/api/public/events?${params.toString()}`;
+        title = "High-risk records";
+        subtitle = "Only high-risk event records.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Syndrome", val: "syndrome" },
+          { key: "Risk", val: "risk_score" },
+          { key: "Latitude", val: "latitude" },
+          { key: "Longitude", val: "longitude" },
+        ];
+      } else if (view === "env") {
+        url = `/api/public/environment?${params.toString()}`;
+        title = "Environmental observation records";
+        subtitle = "Submitted environmental points supporting risk context.";
+        headers = [
+          { key: "Observed At", val: "observed_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Rainfall", val: "rainfall_index" },
+          { key: "NDVI", val: "ndvi_index" },
+          { key: "Temp C", val: "temperature_c" },
+          { key: "Source", val: "source" },
+        ];
+      } else {
+        url = `/api/public/events/flags?${params.toString()}&status=flagged`;
+        title = "Data flags records";
+        subtitle = "Flagged data-quality records requiring review.";
+        headers = [
+          { key: "Time", val: "created_at" },
+          { key: "District", val: "district" },
+          { key: "Parish", val: "parish" },
+          { key: "Syndrome", val: "syndrome" },
+          { key: "Validation", val: "validation_status" },
+          { key: "Latitude", val: "latitude" },
+          { key: "Longitude", val: "longitude" },
+        ];
+      }
+
+      try {
+        bodyEl.innerHTML = `<div class="shimmer-block"></div>`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : [];
+        titleEl.textContent = title;
+        subEl.textContent = subtitle;
+        bodyEl.innerHTML = renderRowsTable(headers, rows);
+        metricPanel.style.display = "block";
+        metricPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        metricPanel.classList.add("panel-flash");
+        setTimeout(() => metricPanel.classList.remove("panel-flash"), 1400);
+        setStatus(`Loaded ${rows.length} ${view} record(s).`);
+      } catch (e) {
+        setStatus(`Load failed: ${e.message}`, true);
+      }
+    }
+
+    document.querySelectorAll("[data-metric-view]").forEach((btn) => {
+      btn.addEventListener("click", () => loadMetricView(btn.getAttribute("data-metric-view")));
+    });
+
+    async function loadMap() {
+      setButtonLoading("loadMapBtn", true);
+      const district = document.getElementById("districtFilter").value;
+      const highRiskOnly = document.getElementById("highRiskOnly").checked;
+      const params = new URLSearchParams({ limit: "500", high_risk_only: String(highRiskOnly) });
+      if (district) params.set("district", district);
+      const url = `/api/public/geo/events?${params.toString()}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        const data = await res.json();
+        const count = renderMapFeatures(data.features || [], district);
+        setStatus(`Loaded ${count} live events on map.`);
+      } catch (e) {
+        setStatus(`Map load failed: ${e.message}`, true);
+      } finally {
+        setButtonLoading("loadMapBtn", false);
+      }
+    }
+
+    async function loadSummary() {
+      setButtonLoading("loadSummaryBtn", true);
+      const district = document.getElementById("districtFilter").value;
+      const params = new URLSearchParams();
+      if (district) params.set("district", district);
+      try {
+        const res = await fetch(`/api/public/summary?${params.toString()}`);
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        const s = await res.json();
+        updateDashboardStats(s);
+        document.getElementById("summaryBody").innerHTML =
+          `<tr><td>${s.district || "All"}</td><td>${s.total_events}</td><td>${s.high_risk_events}</td><td>${s.flagged_events ?? 0}</td><td>${s.total_alerts}</td><td>${s.new_alerts}</td><td>${s.investigating_alerts}</td><td>${s.env_points}</td></tr>`;
+        setStatus("Loaded live summary — headline tiles updated to match mobile scope.");
+      } catch (e) {
+        setStatus(`Summary load failed: ${e.message}`, true);
+      } finally {
+        setButtonLoading("loadSummaryBtn", false);
+      }
+    }
+
+    document.getElementById("loadMapBtn").addEventListener("click", loadMap);
+    document.getElementById("loadSummaryBtn").addEventListener("click", loadSummary);
+
+    // Show available event GPS points immediately from server-rendered recent events.
+    const seedFeatures = [
+      {% for e in events %}
+      {
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [{{ e.longitude or 0 }}, {{ e.latitude or 0 }}] },
+        properties: {
+          district: "{{ e.district }}",
+          parish: "{{ e.parish }}",
+          syndrome: "{{ e.syndrome }}",
+          risk_score: "{{ e.risk_score }}",
+          high_risk: {{ "true" if e.high_risk else "false" }},
+          created_at: "{{ e.created_at }}"
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+    const initialCount = renderMapFeatures(seedFeatures, "");
+    if (initialCount > 0) {
+      setStatus(`Loaded ${initialCount} event GPS point(s).`);
+    }
+
+    setStatus("Public dashboard ready. Loading live summary and map...");
+    loadSummary();
+    loadMap();
+
+    (function () {
+      var side = document.getElementById("staffSidebar");
+      var btn = document.getElementById("staffSidebarToggle");
+      if (!side || !btn) return;
+      btn.addEventListener("click", function () {
+        var collapsed = side.classList.toggle("collapsed");
+        btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      });
+    })();
+
+    (function () {
+      const rvfPanel = document.getElementById("panel-rvf");
+      const controls = document.querySelector("section.controls");
+      if (!rvfPanel || !controls || !controls.parentNode) return;
+      controls.parentNode.insertBefore(rvfPanel, controls);
+    })();
+
+    (function () {
+      function jumpToPanel(id) {
+        const target = document.getElementById(id);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      document.querySelectorAll("[data-rvf-jump]").forEach((el) => {
+        el.addEventListener("click", function () {
+          const panelId = el.getAttribute("data-rvf-jump");
+          if (panelId) jumpToPanel(panelId);
+        });
+      });
+    })();
+
+    /* =========================================================
+       RVF Intelligence Center — modal content registry & wiring
+       ========================================================= */
+    const RVF_CONTENT = {
+      "rvf-overview": {
+        kind: "Clip",
+        title: "Rift Valley fever — overview",
+        subtitle: "Transmission, signs, prevention & control for community and clinical teams.",
+        media: {
+          type: "video_file",
+          src: "https://www.w3schools.com/html/mov_bbb.mp4",
+          poster: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1200&q=70",
+          caption: "Training clip: Rift Valley fever overview"
+        },
+        sections: [
+          { h: "What is Rift Valley fever?", p: "RVF is a viral zoonosis caused by a Phlebovirus that primarily affects livestock — cattle, sheep, goats, camels — but also infects humans. Outbreaks often follow heavy rains and flooding that flush mosquito breeding sites and amplify the cycle of transmission between vectors and ruminants." },
+          { h: "How it spreads", list: [
+            "<strong>Mosquito bite</strong> — Aedes and Culex mosquitoes are the primary vectors.",
+            "<strong>Direct exposure</strong> — contact with infected animal blood, tissue, or aborted material during slaughter, calving, or veterinary care.",
+            "<strong>Aerosol</strong> — risk for laboratory and abattoir workers handling infected specimens.",
+            "<strong>Unpasteurized milk</strong> — possible but less common transmission route."
+          ]},
+          { h: "Clinical signs in animals", list: [
+            "Sudden abortion storms in pregnant cattle, sheep, and goats (a hallmark signal).",
+            "High mortality in newborn lambs, kids, and calves.",
+            "Fever, weakness, nasal discharge, and bloody diarrhea in adult animals."
+          ]},
+          { h: "Clinical signs in humans", list: [
+            "Most cases are mild flu-like illness with fever, headache, joint pain, lasting 4–7 days.",
+            "Severe disease (≈1–2%) includes hemorrhagic fever, encephalitis, or eye disease (retinitis).",
+            "Pregnancy outcomes can be severely affected; vertical transmission has been reported."
+          ]},
+          { h: "Prevention & control", list: [
+            "Vaccinate susceptible livestock <em>before</em> high-risk seasons.",
+            "Use personal protective equipment when handling animals or specimens.",
+            "Avoid raw/unpasteurized animal products in outbreak zones.",
+            "Strengthen vector control around standing water and livestock holding pens."
+          ]}
+        ],
+        actions: [
+          { label: "Play on YouTube", href: "https://www.youtube.com/watch?v=95V4R3V5JmM", external: true },
+          { label: "Open live map", href: "#panel-map" },
+          { label: "View alerts", href: "#panel-alerts" }
+        ]
+      },
+      "vector-ecology": {
+        kind: "Clip",
+        title: "Vector ecology & climate drivers",
+        subtitle: "Why heavy rainfall, vegetation flushes, and pooled water spike RVF risk.",
+        media: {
+          type: "video_file",
+          src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+          poster: "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=1200&q=70",
+          caption: "Training clip: Vector ecology and climate drivers"
+        },
+        sections: [
+          { h: "Climate triggers", p: "RVF activity is closely linked to abnormal rainfall and flooding. Wet years following dry periods produce explosive growth in mosquito populations because eggs deposited in dry dambos hatch when those depressions flood." },
+          { h: "Vector groups", list: [
+            "<strong>Aedes</strong> mosquitoes — primary maintenance vectors; lay drought-resistant eggs in dambos.",
+            "<strong>Culex</strong> mosquitoes — amplification vectors during outbreaks.",
+            "Mansonia, Anopheles, and others contribute under specific ecological conditions."
+          ]},
+          { h: "Environmental indicators we track", list: [
+            "<strong>Rainfall anomaly</strong> — % deviation from seasonal average.",
+            "<strong>NDVI</strong> — vegetation greenness, a proxy for moisture and forage.",
+            "<strong>Land surface temperature</strong> — affects mosquito development time.",
+            "<strong>Standing water duration</strong> — derived from satellite imagery, predicts hatch waves."
+          ]},
+          { h: "Operational implications", p: "When two or more environmental indicators cross alert thresholds in a district, the system pre-stages a hotspot watch and increases the polling cadence on field reports. Vector-control teams can then act before clinical cases appear." }
+        ],
+        actions: [
+          { label: "Play on YouTube", href: "https://www.youtube.com/watch?v=sxwM5jv5n8Y", external: true },
+          { label: "View environmental panel", href: "#panel-remote" },
+          { label: "Open live map", href: "#panel-map" }
+        ]
+      },
+      "voices": {
+        kind: "Clip",
+        title: "Voices of impact",
+        subtitle: "How anticipatory action protects herds, livelihoods, and communities.",
+        media: {
+          type: "video_file",
+          src: "https://www.w3schools.com/html/movie.mp4",
+          poster: "https://images.unsplash.com/photo-1581093588401-fbb62a02f120?auto=format&fit=crop&w=1200&q=70",
+          caption: "Training clip: Voices of impact"
+        },
+        sections: [
+          { h: "From the farmer", p: "<em>“Last year we lost half our newborn calves to abortions before anyone explained the cause. This year, when the alert came two months early, we vaccinated and kept the herd in higher pasture. We didn’t lose a single calf.”</em>" },
+          { h: "From the veterinarian", p: "<em>“What used to take three trips on a motorbike — find the case, log it, share it — now takes two minutes on the app, even offline. The structured fields force us to capture the right data the first time.”</em>" },
+          { h: "From the clinician", p: "<em>“For pregnant women presenting with fever in livestock-owning households, the syndromic prompt reminds us to ask about animal exposure and abortion history. We don’t miss the link any more.”</em>" },
+          { h: "From the policymaker", p: "<em>“Anticipatory action is cheaper than outbreak response. The dashboard gives us a defensible reason to release vaccine and PPE budgets <strong>before</strong> a crisis, not after.”</em>" }
+        ],
+        actions: [
+          { label: "Play on YouTube", href: "https://www.youtube.com/watch?v=K3xT9f0x9pQ", external: true },
+          { label: "See pilot events", href: "#panel-events" },
+          { label: "Open user management", href: "#panel-users" }
+        ]
+      },
+      "news-training": {
+        kind: "News",
+        title: "Integrated early warning training for district focal persons",
+        subtitle: "Hands-on workshops in Isingiro, Rubanda, and Kabale.",
+        sections: [
+          { h: "What was covered", list: [
+            "Walkthrough of the e-OSEWS surveillance dashboard and mobile app.",
+            "Structured case reporting: GPS capture, syndrome selection, exposure flags.",
+            "Alert lifecycle: triage → investigation → resolution with audit trail.",
+            "Role-based access for VHTs, vets, clinicians, district officers, and admins."
+          ]},
+          { h: "Who attended", p: "District surveillance officers, parish-level VHTs, veterinary extension officers, midwives, and laboratory focal persons. Sessions were translated into Runyankole/Rukiga where needed and used flowcharts and pocket cards for low-literacy audiences." },
+          { h: "Outcomes", list: [
+            "100% of attendees completed at least one structured submission during the workshop.",
+            "Average reporting latency dropped from 36 hours to under 4 hours in the pilot week.",
+            "Two trainers per district were certified as on-site mentors for ongoing support."
+          ]}
+        ],
+        actions: [
+          { label: "Open user management", href: "#panel-users" }
+        ]
+      },
+      "alert-seasonal": {
+        kind: "Alert",
+        title: "Seasonal RVF risk advisory",
+        subtitle: "Risk assessment with anticipatory action triggers.",
+        sections: [
+          { h: "Current risk picture", p: "Above-average rainfall over the second half of the rainy season has produced sustained vegetation greening (NDVI anomaly +0.18) and prolonged standing water in low-lying parishes. Historical models indicate elevated RVF amplification risk for the next 8–12 weeks." },
+          { h: "Anticipatory triggers", list: [
+            "Vaccinate sheep, goats, and cattle in flagged parishes within 30 days.",
+            "Pre-position PPE and clinical referral kits at district hospitals.",
+            "Activate community sensitization (radio, VHT door-to-door) on safe slaughter and milk handling.",
+            "Increase surveillance polling frequency in flagged areas."
+          ]},
+          { h: "What to watch", list: [
+            "Abortion clusters in livestock (the earliest reliable signal).",
+            "Febrile illness in livestock-owning households.",
+            "Mosquito density spikes around livestock holding pens."
+          ]}
+        ],
+        actions: [
+          { label: "View alert pipeline", href: "#panel-alerts" },
+          { label: "Open environmental panel", href: "#panel-remote" }
+        ]
+      },
+      "publication-framework": {
+        kind: "Publication",
+        title: "Rift Valley fever action framework",
+        subtitle: "Decision-maker guidance for outbreak prevention, response, and recovery.",
+        sections: [
+          { h: "Purpose", p: "The action framework helps district and national decision makers select the best course of action across the RVF risk continuum — from elevated risk before any case, to active outbreak control, to post-outbreak recovery." },
+          { h: "Phases covered", list: [
+            "<strong>Anticipation</strong> — environmental triggers, pre-positioning, vaccination windows.",
+            "<strong>Detection</strong> — syndromic and laboratory surveillance, case definitions.",
+            "<strong>Response</strong> — case management, vector control, movement restrictions, risk communication.",
+            "<strong>Recovery</strong> — restocking, after-action review, lessons learned."
+          ]},
+          { h: "How e-OSEWS supports each phase", list: [
+            "Anticipation: environmental dashboard + alert thresholds.",
+            "Detection: structured mobile/USSD reporting and validation flags.",
+            "Response: alert workflow with status, escalation, and audit trail.",
+            "Recovery: full event history per district for AAR and learning loops."
+          ]}
+        ],
+        actions: [
+          { label: "Open live summary", href: "#panel-summary" }
+        ]
+      },
+      "brochure-innovation": {
+        kind: "Brochure",
+        title: "Driving preparedness through innovation",
+        subtitle: "A web-based RVF early warning platform for One Health coordination.",
+        sections: [
+          { h: "The problem", p: "Traditional surveillance is slow, paper-based, and siloed across animal and human health. By the time outbreaks are confirmed, vaccination windows have closed and clinical capacity is already overwhelmed." },
+          { h: "Our approach", list: [
+            "<strong>Offline-first mobile app</strong> for field reporting.",
+            "<strong>USSD/SMS</strong> for community channels without smartphones.",
+            "<strong>Environmental layer</strong> with rainfall, NDVI, and temperature.",
+            "<strong>AI risk scoring</strong> for hotspot ranking and individual-level risk.",
+            "<strong>Public dashboard</strong> for district focal persons and partners."
+          ]},
+          { h: "Pilot results so far", list: [
+            "Reporting latency: 36h → < 4h.",
+            "Validation completeness: > 95% on structured fields.",
+            "Cross-sector visibility: animal + human health on the same map."
+          ]},
+          { h: "Read more about e-OSEWS", p: "Visit our <a href='/about'>About page</a> for the full project background, design philosophy, and pilot evaluation framework." }
+        ],
+        actions: [
+          { label: "Open About e-OSEWS", href: "/about" }
+        ]
+      },
+      "obj-predict": {
+        kind: "Objective",
+        title: "Predict hotspots",
+        subtitle: "Identify potential RVF hotspots two to three months in advance.",
+        sections: [
+          { h: "How it works", list: [
+            "Rainfall and NDVI anomaly thresholds at district + parish level.",
+            "Land surface temperature and vegetation moisture indices.",
+            "Historical case clusters as ground-truth labels for model training."
+          ]},
+          { h: "Decision support", p: "Model outputs are overlaid on the live map and on the environmental panel. Hotspots crossing the alert threshold trigger pre-staged response checklists." }
+        ],
+        actions: [{ label: "Open live map", href: "#panel-map" }]
+      },
+      "obj-integrate": {
+        kind: "Objective",
+        title: "Integrate intelligence",
+        subtitle: "Real-time and historical disease intelligence with district-level field reports.",
+        sections: [
+          { h: "Sources combined", list: [
+            "Mobile app structured events with GPS + IP capture.",
+            "USSD/SMS community signals with idempotency keys.",
+            "Environmental observation feeds (rainfall, NDVI, temperature).",
+            "Lab confirmations and placental screening results."
+          ]},
+          { h: "How users see it", p: "All sources flow into a single events table with consistent district/parish geocoding and audit-traceable validation status." }
+        ],
+        actions: [{ label: "Open events", href: "#panel-events" }]
+      },
+      "obj-alert": {
+        kind: "Objective",
+        title: "Issue timely alerts",
+        subtitle: "Trigger alerts so districts can launch rapid preventive measures.",
+        sections: [
+          { h: "Alert lifecycle", list: [
+            "<strong>New</strong> — generated from rules or manual escalation.",
+            "<strong>Investigating</strong> — assigned to a district focal person.",
+            "<strong>Resolved</strong> — closed with notes and outcome.",
+            "Full audit trail of who, what, when, and where."
+          ]}
+        ],
+        actions: [{ label: "View alerts", href: "#panel-alerts" }]
+      },
+      "obj-strengthen": {
+        kind: "Objective",
+        title: "Strengthen surveillance",
+        subtitle: "Environmental surveillance, risk analysis, and early-action planning.",
+        sections: [
+          { h: "Capacity-building components", list: [
+            "Cascade training for VHTs, vets, midwives, and clinicians.",
+            "Job aids and pocket cards localized to district languages.",
+            "Standardized case definitions harmonized with national guidance.",
+            "Periodic data-quality reviews and after-action reviews."
+          ]}
+        ],
+        actions: [{ label: "Open user management", href: "#panel-users" }]
+      },
+      "step-sense": {
+        kind: "Pipeline step",
+        title: "Sense — environmental signal layer",
+        subtitle: "Step 1 of 5",
+        sections: [
+          { h: "What we ingest", list: [
+            "Rainfall anomalies (mm vs. climatology).",
+            "NDVI vegetation greenness (Sentinel/Landsat-derived).",
+            "Land surface temperature.",
+            "Standing water duration around livestock holding sites."
+          ]},
+          { h: "Why it matters", p: "Environmental anomalies typically precede clinical cases by 4–12 weeks. They are our earliest, lowest-cost early warning signal." }
+        ],
+        actions: [{ label: "Open environmental panel", href: "#panel-remote" }]
+      },
+      "step-report": {
+        kind: "Pipeline step",
+        title: "Report — community & facility reporting",
+        subtitle: "Step 2 of 5",
+        sections: [
+          { h: "Channels", list: [
+            "Mobile app (offline-first, structured fields).",
+            "USSD/SMS for non-smartphone users.",
+            "Web report-case form for facility staff.",
+            "Bulk import for laboratory results."
+          ]},
+          { h: "What we capture", list: [
+            "GPS coordinates and reporter IP.",
+            "Reporter role, district, and parish.",
+            "Syndrome, exposure, gestational status (where relevant).",
+            "Idempotency key to prevent duplicates on poor networks."
+          ]}
+        ],
+        actions: [{ label: "Open events", href: "#panel-events" }]
+      },
+      "step-score": {
+        kind: "Pipeline step",
+        title: "Score — risk and anomaly detection",
+        subtitle: "Step 3 of 5",
+        sections: [
+          { h: "What the score reflects", list: [
+            "Severity of reported syndrome.",
+            "Exposure pathway (animal contact, slaughter, parturition).",
+            "Local environmental anomaly (rainfall, NDVI).",
+            "Clustering with nearby reports in space and time."
+          ]},
+          { h: "High-risk threshold", p: "Events with score ≥ a calibrated cutoff are flagged <code>high_risk = 1</code>. Validation flags catch out-of-range values automatically." }
+        ],
+        actions: [{ label: "View high-risk records", href: "#dash-overview" }]
+      },
+      "step-alert": {
+        kind: "Pipeline step",
+        title: "Alert — escalation to action",
+        subtitle: "Step 4 of 5",
+        sections: [
+          { h: "How alerts are created", list: [
+            "Automatic from rules (e.g. multiple high-risk events in a parish within 7 days).",
+            "Manual escalation by a district focal person.",
+            "Cross-channel alerts when animal and human signals coincide."
+          ]},
+          { h: "Who sees them", p: "District officers see all alerts for their districts. National admins see all districts. Audit logs record every state change." }
+        ],
+        actions: [{ label: "Open alerts", href: "#panel-alerts" }]
+      },
+      "step-act": {
+        kind: "Pipeline step",
+        title: "Act — anticipatory and outbreak response",
+        subtitle: "Step 5 of 5",
+        sections: [
+          { h: "Anticipatory actions", list: [
+            "Pre-emptive livestock vaccination in flagged parishes.",
+            "Vector control around mosquito breeding sites.",
+            "Community risk communication on safe slaughter and milk handling.",
+            "Pre-positioning of PPE and referral kits."
+          ]},
+          { h: "Active outbreak response", list: [
+            "Movement restrictions on suspect herds.",
+            "Case management protocols for human cases.",
+            "Joint animal–human investigation teams.",
+            "Daily status reporting via the dashboard."
+          ]}
+        ],
+        actions: [{ label: "Open live summary", href: "#panel-summary" }]
+      },
+      "references": {
+        kind: "References",
+        title: "External references",
+        subtitle: "Background reading from major public-health and animal-health bodies.",
+        sections: [
+          { h: "Selected references", list: [
+            "<a href='https://www.who.int/news-room/fact-sheets/detail/rift-valley-fever' target='_blank' rel='noopener noreferrer'>WHO &mdash; Rift Valley fever fact sheet</a>",
+            "<a href='https://www.cdc.gov/rvf/index.html' target='_blank' rel='noopener noreferrer'>CDC &mdash; Rift Valley fever</a>",
+            "<a href='https://www.woah.org/en/disease/rift-valley-fever/' target='_blank' rel='noopener noreferrer'>WOAH &mdash; Rift Valley fever</a>",
+            "<a href='https://www.afro.who.int/health-topics/rift-valley-fever' target='_blank' rel='noopener noreferrer'>WHO Africa &mdash; Rift Valley fever</a>"
+          ]}
+        ],
+        actions: []
+      }
+    };
+
+    (function () {
+      const overlay = document.getElementById("rvfModalOverlay");
+      const dialog = document.getElementById("rvfModalDialog");
+      const titleEl = document.getElementById("rvfModalTitle");
+      const subEl = document.getElementById("rvfModalSubtitle");
+      const kindEl = document.getElementById("rvfModalKind");
+      const bodyEl = document.getElementById("rvfModalBody");
+      const actionsEl = document.getElementById("rvfModalActions");
+      const closeBtn = document.getElementById("rvfModalClose");
+      let lastFocus = null;
+
+      if (!overlay || !dialog) return;
+
+      function renderSection(sec) {
+        let html = "";
+        if (sec.h) html += `<h4>${sec.h}</h4>`;
+        if (sec.p) html += `<p>${sec.p}</p>`;
+        if (Array.isArray(sec.list) && sec.list.length) {
+          html += "<ul>" + sec.list.map((it) => `<li>${it}</li>`).join("") + "</ul>";
+        }
+        return html;
+      }
+
+      function open(key) {
+        const data = RVF_CONTENT[key];
+        if (!data) return;
+        const mediaHtml = data.media && data.media.type === "video"
+          ? `
+            <figure class="rvf-modal-media">
+              <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#0b1530">
+                <iframe
+                  src="${data.media.embed}"
+                  title="${data.title}"
+                  style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                ></iframe>
+              </div>
+              <figcaption style="margin-top:.5rem;color:var(--muted);font-size:.9rem">
+                ${data.media.caption || ""}
+                ${data.media.watch ? ` · <a href="${data.media.watch}" target="_blank" rel="noopener noreferrer">Open in new tab</a>` : ""}
+              </figcaption>
+            </figure>
+          `
+          : data.media && data.media.type === "video_file"
+            ? `
+              <figure class="rvf-modal-media">
+                <video controls preload="metadata" playsinline style="width:100%;border-radius:12px;background:#0b1530" ${data.media.poster ? `poster="${data.media.poster}"` : ""}>
+                  <source src="${data.media.src}" type="video/mp4" />
+                  Your browser does not support embedded video.
+                </video>
+                <figcaption style="margin-top:.5rem;color:var(--muted);font-size:.9rem">
+                  ${data.media.caption || ""}
+                </figcaption>
+              </figure>
+            `
+          : "";
+        kindEl.textContent = data.kind || "";
+        titleEl.textContent = data.title || "";
+        subEl.textContent = data.subtitle || "";
+        bodyEl.innerHTML = mediaHtml + (data.sections || []).map(renderSection).join("");
+        actionsEl.innerHTML = (data.actions || [])
+          .map((a) => {
+            const external = Boolean(a.external) || /^https?:\/\//i.test(a.href || "");
+            const target = external ? ` target="_blank" rel="noopener noreferrer"` : "";
+            return `<a class="btn btn-primary" href="${a.href}"${target}>${a.label}</a>`;
+          })
+          .join("");
+        lastFocus = document.activeElement;
+        overlay.classList.add("is-open");
+        document.body.classList.add("rvf-modal-open");
+        setTimeout(() => closeBtn.focus(), 30);
+      }
+
+      function close() {
+        overlay.classList.remove("is-open");
+        document.body.classList.remove("rvf-modal-open");
+        if (lastFocus && typeof lastFocus.focus === "function") {
+          lastFocus.focus();
+        }
+      }
+
+      document.querySelectorAll("[data-rvf-modal]").forEach((el) => {
+        el.addEventListener("click", function (ev) {
+          const key = el.getAttribute("data-rvf-modal");
+          if (!key) return;
+          if (el.tagName === "A") ev.preventDefault();
+          open(key);
+        });
+        if (el.getAttribute("role") === "button" || el.tagName === "LI" || el.tagName === "ARTICLE") {
+          el.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              const key = el.getAttribute("data-rvf-modal");
+              if (key) open(key);
+            }
+          });
+        }
+      });
+
+      closeBtn.addEventListener("click", close);
+      overlay.addEventListener("click", function (ev) {
+        if (ev.target === overlay) close();
+      });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape" && overlay.classList.contains("is-open")) close();
+      });
+
+      actionsEl.addEventListener("click", function (ev) {
+        const a = ev.target.closest("a");
+        if (a && a.getAttribute("href") && a.getAttribute("href").startsWith("#")) {
+          close();
+        }
+      });
+    })();
+  </script>
+
+  <div class="rvf-modal-overlay" id="rvfModalOverlay" aria-hidden="true">
+    <div class="rvf-modal" id="rvfModalDialog" role="dialog" aria-modal="true" aria-labelledby="rvfModalTitle">
+      <header class="rvf-modal-head">
+        <span class="rvf-modal-kind" id="rvfModalKind"></span>
+        <h3 id="rvfModalTitle"></h3>
+        <p id="rvfModalSubtitle"></p>
+        <button type="button" class="rvf-modal-close" id="rvfModalClose" aria-label="Close">&times;</button>
+      </header>
+      <div class="rvf-modal-body" id="rvfModalBody"></div>
+      <footer class="rvf-modal-foot" id="rvfModalActions"></footer>
+    </div>
+  </div>
+</body>
+</html>

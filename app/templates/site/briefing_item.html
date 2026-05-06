@@ -1,0 +1,27 @@
+{% extends "layout_site.html" %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block content %}
+<section class="site-hero">
+  <p class="kicker">{{ category }}</p>
+  <h1>{{ title }}</h1>
+  <p class="lead">{{ summary }}</p>
+</section>
+
+<article class="content-card">
+  <h2>Key points</h2>
+  <ul>
+    {% for item in bullets %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+</article>
+
+<article class="content-card">
+  <h2>Continue exploring</h2>
+  <p>Return to the dashboard RVF center for live events, map context, and alerts.</p>
+  <p>
+    <a href="/dashboard">Open dashboard</a> ·
+    <a href="/resources">Open resources</a>
+  </p>
+</article>
+{% endblock %}

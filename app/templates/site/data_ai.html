@@ -1,0 +1,81 @@
+{% extends "layout_site.html" %}
+{% block page_title %}Data &amp; AI{% endblock %}
+{% block content %}
+<section class="site-hero">
+  <p class="kicker">Analytics layer</p>
+  <h1>Data &amp; artificial intelligence</h1>
+  <p class="lead">How e-OSEWS turns heterogeneous field data into risk signals and early warning.</p>
+</section>
+
+<section class="gallery-grid">
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1551281044-8b0a8f5f5f1f?auto=format&fit=crop&w=900&q=80" alt="Data visualization dashboard" />
+    <p>Data fusion</p>
+  </article>
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1516110833967-0b5716ca1387?auto=format&fit=crop&w=900&q=80" alt="Artificial intelligence model concept" />
+    <p>Risk scoring</p>
+  </article>
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1460574283810-2aab119d8511?auto=format&fit=crop&w=900&q=80" alt="Map and environmental signal concept" />
+    <p>Geo-anomaly detection</p>
+  </article>
+</section>
+
+<article class="content-card">
+  <h2>Machine-learning risk scores</h2>
+  <p>Structured human and animal events feed models that estimate <strong>individual- or cluster-level risk</strong> from syndrome combinations, species, gestational context, animal exposure, and geography. Scores are designed to be interpretable by district reviewers and to triage cases for follow-up—not to replace clinical judgment or laboratory confirmation.</p>
+</article>
+
+<article class="content-card">
+  <h2>Anomaly detection</h2>
+  <p>Temporal and spatial anomaly methods highlight <strong>unexpected increases</strong> in compatible syndromes by parish or facility catchment, optionally weighted by environmental indices. Alerts can be generated when thresholds are crossed or when multivariate residuals suggest a departure from seasonal baselines.</p>
+</article>
+
+<article class="content-card">
+  <h2>Environmental data</h2>
+  <p>Rainfall accumulation and vegetation condition (e.g. NDVI-derived greenness) modulate vector habitat and livestock movement. The system stores rainfall indices, NDVI, and temperature alongside events so analysts can visualise <strong>co-location</strong> of environmental stress and syndromic clusters—supporting early warning and after-action reviews.</p>
+</article>
+
+<article class="content-card">
+  <h2>Operational prediction horizon</h2>
+  <p>Inspired by global RVF decision-support approaches, e-OSEWS is tuned for anticipatory planning by combining climate/environment trends, field surveillance, and analyst review to highlight potential hotspots ahead of widespread transmission.</p>
+  <div class="kpi-ribbon">
+    <span class="kpi-pill">Satellite and climate context</span>
+    <span class="kpi-pill">Field and facility signals</span>
+    <span class="kpi-pill">Risk score + anomaly layer</span>
+    <span class="kpi-pill">Alert to action workflow</span>
+  </div>
+</article>
+
+<article class="content-card">
+  <h2>Analytics pipeline</h2>
+  <div class="steps-grid">
+    <div class="step-card">
+      <span class="step-index">1</span>
+      <h4>Ingest</h4>
+      <p>Events, USSD records, environmental observations, and validation notes are consolidated.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-index">2</span>
+      <h4>Score</h4>
+      <p>Rule-based and model-assisted scoring identifies high-risk reports and outlier patterns.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-index">3</span>
+      <h4>Act</h4>
+      <p>District teams review maps, prioritize investigations, and coordinate preventive response.</p>
+    </div>
+  </div>
+</article>
+
+<article class="content-card">
+  <h2>Trusted references and methods</h2>
+  <div class="reference-links">
+    <a href="https://www.who.int/publications/i/item/9789240034829" target="_blank" rel="noopener noreferrer">WHO digital health guideline references</a>
+    <a href="https://www.cdc.gov/rvf/index.html" target="_blank" rel="noopener noreferrer">CDC Rift Valley fever reference</a>
+    <a href="https://www.nature.com/collections/fbcbhhfced" target="_blank" rel="noopener noreferrer">Machine learning in epidemiology (Nature collection)</a>
+    <a href="https://ourworldindata.org/emergence-new-infectious-diseases" target="_blank" rel="noopener noreferrer">Our World in Data disease trend context</a>
+  </div>
+</article>
+{% endblock %}

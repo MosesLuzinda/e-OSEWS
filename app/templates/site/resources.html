@@ -1,0 +1,106 @@
+{% extends "layout_site.html" %}
+{% block page_title %}Resources{% endblock %}
+{% block content %}
+<section class="site-hero">
+  <p class="kicker">Tools for the field</p>
+  <h1>Resources</h1>
+  <p class="lead">Training packages, job aids, and technical references for implementers and partners.</p>
+</section>
+
+<section class="gallery-grid">
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80" alt="Training and mentoring session" />
+    <p>Training resources</p>
+  </article>
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=900&q=80" alt="Clinical and surveillance documentation tools" />
+    <p>Job aids and forms</p>
+  </article>
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80" alt="Technical architecture and planning board" />
+    <p>Technical documents</p>
+  </article>
+</section>
+
+<article class="content-card">
+  <h2>Training materials</h2>
+  <ul>
+    <li>Slide decks (PPT) for district orientation, facility rollout, and VHT/vet cascades.</li>
+    <li>Flowcharts for triage, escalation, and specimen referral where RVF testing is indicated.</li>
+    <li>Case definitions harmonised with national RVF and maternal syndromic surveillance guidance.</li>
+    <li>PPE and safe sampling reminders for clinical and veterinary staff.</li>
+  </ul>
+  <p><em>Placeholder:</em> attach final PDFs/PPTs here when cleared for public distribution; until then, request access through the <a href="/contact">contact</a> page.</p>
+</article>
+
+<article class="content-card">
+  <h2>Job aids</h2>
+  <p>Pocket cards and posters for <strong>VHTs</strong>, <strong>veterinarians</strong>, <strong>traditional birth attendants (where applicable)</strong>, and <strong>midwives</strong>—with pictorial prompts, local language hooks, and district-specific contact numbers for rapid reporting.</p>
+</article>
+
+<article class="content-card">
+  <h2>Technical documents</h2>
+  <ul>
+    <li>e-OSEWS system architecture (mobile app, API, database, web dashboard).</li>
+    <li>Data dictionary for events, alerts, environmental observations, and audit logs.</li>
+    <li>API design: authentication, role scopes, summary endpoints, and validation hooks.</li>
+  </ul>
+</article>
+
+<article class="content-card" id="media">
+  <h2>Media and external knowledge</h2>
+  <p>Curated learning resources customized for e-OSEWS, with links to widely used international RVF references.</p>
+  <div class="media-grid">
+    <div class="media-card">
+      <div class="media-thumb">RVF overview</div>
+      <div class="media-body">
+        <h3>What you need to know about RVF</h3>
+        <p>Transmission routes, signs, and practical prevention/control actions for field teams.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.who.int/news-room/fact-sheets/detail/rift-valley-fever" target="_blank" rel="noopener noreferrer">WHO fact sheet</a>
+        </div>
+      </div>
+    </div>
+    <div class="media-card">
+      <div class="media-thumb">Vector ecology</div>
+      <div class="media-body">
+        <h3>Mosquito vectors &amp; climate drivers</h3>
+        <p>How heavy rains, flooding, and vegetation flushes amplify RVF transmission risk in livestock and humans.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.cdc.gov/rvf/index.html" target="_blank" rel="noopener noreferrer">CDC reference</a>
+        </div>
+      </div>
+    </div>
+    <div class="media-card">
+      <div class="media-thumb">Animal health</div>
+      <div class="media-body">
+        <h3>WOAH disease reference</h3>
+        <p>Animal-health technical reference, listed disease information, and recommended national reporting.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.woah.org/en/disease/rift-valley-fever/" target="_blank" rel="noopener noreferrer">Open WOAH page</a>
+        </div>
+      </div>
+    </div>
+    <div class="media-card">
+      <div class="media-thumb">Regional context</div>
+      <div class="media-body">
+        <h3>Africa CDC &amp; WHO Africa</h3>
+        <p>Continental and regional health agency context for outbreak alerts and preparedness coordination.</p>
+        <div class="media-actions">
+          <a class="media-btn" href="https://www.afro.who.int/health-topics/rift-valley-fever" target="_blank" rel="noopener noreferrer">WHO Africa</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="source-note">Reference sources: WHO, CDC, WOAH, and Africa CDC public materials.</p>
+</article>
+<article class="content-card">
+  <h2>Additional global content libraries</h2>
+  <div class="reference-links">
+    <a href="https://www.who.int/publications" target="_blank" rel="noopener noreferrer">WHO publications</a>
+    <a href="https://openwho.org/" target="_blank" rel="noopener noreferrer">OpenWHO learning courses</a>
+    <a href="https://www.unicef.org/reports" target="_blank" rel="noopener noreferrer">UNICEF technical reports</a>
+    <a href="https://www.cdc.gov/globalhealth/index.html" target="_blank" rel="noopener noreferrer">CDC global health</a>
+  </div>
+</article>
+{% endblock %}

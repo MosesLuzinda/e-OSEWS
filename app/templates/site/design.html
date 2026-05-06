@@ -1,0 +1,70 @@
+{% extends "layout_site.html" %}
+{% block page_title %}Design{% endblock %}
+{% block content %}
+<section class="site-hero">
+  <p class="kicker">Human-centred design</p>
+  <h1>Design of e-OSEWS</h1>
+  <p class="lead">Co-design with end users, explicit roles, and technology choices that work when the network does not.</p>
+</section>
+
+<section class="gallery-grid">
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Health worker using digital tools" />
+    <p>Facility workflows</p>
+  </article>
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=900&q=80" alt="Livestock context for One Health reporting" />
+    <p>Veterinary integration</p>
+  </article>
+  <article class="gallery-tile">
+    <img src="https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?auto=format&fit=crop&w=900&q=80" alt="Community engagement setting" />
+    <p>Community participation</p>
+  </article>
+</section>
+
+<article class="content-card">
+  <h2>Co-design process</h2>
+  <p>Requirements, forms, and dashboards were developed iteratively with district teams, facility staff, VHTs, and veterinarians. Workshops and field tests informed field names, syndrome lists, escalation language, and the balance between <strong>structured data</strong> (for analytics) and <strong>speed of reporting</strong> at the periphery.</p>
+</article>
+
+<article class="content-card">
+  <h2>User roles</h2>
+  <div class="two-col">
+    <div>
+      <h3>VHTs</h3>
+      <p>Community-level reporting of febrile illness in pregnancy, animal abortions, and deaths using simplified flows and USSD-style structured fields where appropriate.</p>
+    </div>
+    <div>
+      <h3>Veterinarians</h3>
+      <p>Livestock-focused syndromes, exposure context, and linkage to environmental risk layers for spatial prioritisation.</p>
+    </div>
+    <div>
+      <h3>Clinicians &amp; midwives</h3>
+      <p>Facility-based structured event capture with gestational age and maternal risk factors aligned to surveillance case definitions.</p>
+    </div>
+    <div>
+      <h3>District &amp; national roles</h3>
+      <p>Validation, alert management, maps, and exports scoped by district and permission level.</p>
+    </div>
+  </div>
+</article>
+
+<article class="content-card">
+  <h2>Offline-enabled apps</h2>
+  <p>The mobile application queues submissions when connectivity is poor, retries with backoff, and uses idempotent keys to avoid duplicate records. GPS capture supports accurate mapping without manual coordinate entry.</p>
+  <h3>USSD / SMS</h3>
+  <p>Structured USSD-style pathways mirror key fields on the mobile app so community reporters can contribute consistent signals even without a smartphone.</p>
+  <h3>GPS &amp; remote sensing</h3>
+  <p>Event coordinates ground-truth human and animal cases on maps; rainfall indices, NDVI, and temperature fields (from field observation or downstream sensing products) contextualise clusters for early warning and investigation.</p>
+</article>
+
+<article class="content-card">
+  <h2>Design inspiration sources</h2>
+  <div class="reference-links">
+    <a href="https://www.figma.com/community" target="_blank" rel="noopener noreferrer">Figma community design patterns</a>
+    <a href="https://material.io/design" target="_blank" rel="noopener noreferrer">Material design foundations</a>
+    <a href="https://www.nngroup.com/articles/" target="_blank" rel="noopener noreferrer">Nielsen Norman UX guidance</a>
+    <a href="https://carbondesignsystem.com/" target="_blank" rel="noopener noreferrer">IBM Carbon system principles</a>
+  </div>
+</article>
+{% endblock %}
